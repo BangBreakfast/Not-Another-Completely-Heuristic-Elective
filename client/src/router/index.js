@@ -3,7 +3,7 @@ import Router from 'vue-router'
 import HelloWorld from '@/components/HelloWorld'
 
 import ElementUi from 'element-ui'
-import '@/theme-et/index.css'
+import 'element-ui/lib/theme-chalk/index.css'
 
 Vue.use(ElementUi)
 
