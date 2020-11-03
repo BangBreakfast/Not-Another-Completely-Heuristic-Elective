@@ -1,7 +1,8 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import HelloWorld from '@/components/HelloWorld'
-
+import Login from '@/components/Login'
+import Main from '@/components/Main'
 import ElementUi from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 
@@ -16,6 +17,16 @@ export default new Router({
       path: '/test/hello',
       name: 'HelloWorld',
       component: HelloWorld
+    },
+    {
+      path: '/',
+      name: 'Login',
+      component: Login
+    },
+    {
+      path: '/main',
+      name: 'main',
+      component: Main
     }
   ]
 })
