@@ -9,18 +9,18 @@
         <el-input type="password" placeholder="请输入密码" v-model="form.password"/>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" v-on:click="onSubmit('loginForm')">登录</el-button>
+        <el-button type="primary" v-on:click="stuLogin()">登录</el-button>
       </el-form-item>
     </el-form>
 
     <el-dialog
       title="温馨提示"
-      :visible.sync="dialogVisible"
+      :visible.sync="showTishi"
       width="30%"
       :before-close="handleClose">
-      <span>请输入账号和密码</span>
+      <span>{{tishi}}</span>
       <span slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+        <el-button type="primary" @click="showTishi = false">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -28,6 +28,7 @@
 
 <script>
 import {setCookie,getCookie} from '../../assets/js/cookies.js'
+import axios from 'axios'
 export default {
   name: 'Login',
   mounted(){
@@ -54,25 +55,21 @@ export default {
     }
   },
   methods: {
-    login () {
+    stuLogin () {
         if(this.username == "" || this.password == ""){
             alert("请输入用户名或密码")
         }else{
             let data = {'username':this.username,'password':this.password}
             /*接口请求*/
-            this.$http.post('http://localhost/vueapi/index.php/Home/user/login',data).then((res)=>{
+            axios.post('http://localhost:8000/user/Login',this.form,{withCredentials:true}).then((res)=>{
                 console.log(res)
-             /*接口的传值是(-1,该用户不存在),(0,密码错误)，同时还会检测管理员账号的值*/
-              if(res.data == -1){
+              if(res.code == 404){
                   this.tishi = "该用户不存在"
                   this.showTishi = true
-              }else if(res.data == 0){
+              }else if(res.data == -200){
                   this.tishi = "密码输入错误"
                   this.showTishi = true
-              }else if(res.data == 'admin'){
-              /*路由跳转this.$router.push*/
-                  this.$router.push('/main')
-              }else{
+              }else if(res.data == 200){
                   this.tishi = "登录成功"
                   this.showTishi = true
                   setCookie('username',this.username,1000*60)
