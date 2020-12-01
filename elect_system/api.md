@@ -2,8 +2,11 @@
 ## JSON
 ### 登录
 
-/user
-	/user/login 
+/stu
+	/stu/login 
+/admin
+    /admin/login
+    
 ```json
 
 发送

@@ -1,6 +1,7 @@
 <template>
   <div>
     <el-form ref="loginForm" :model="form" :rules="rules" label-width="80px" class="login-box">
+      <h2 class="login-title">学生登录系统</h2>
       <h3 class="login-title">欢迎登录</h3>
       <el-form-item label="账号" prop="username">
         <el-input type="text" placeholder="请输入账号" v-model="form.username"/>
@@ -32,9 +33,9 @@ import axios from 'axios'
 export default {
   name: 'Login',
   mounted(){
-  /*页面挂载获取cookie，如果存在username的cookie，则跳转到主页，不需登录*/
-    if(getCookie('username')){
-        this.$router.push('/home')
+  /*页面挂载获取cookie，如果存在username的cookie，且前五位是admin，则跳转到主页，不需登录*/
+    if(getCookie('username').substring(0,3)=="stu"){
+        this.$router.push('/stuMain')
     }
   },
   data () {
@@ -61,7 +62,7 @@ export default {
         }else{
             let data = {'username':this.username,'password':this.password}
             /*接口请求*/
-            axios.post('http://localhost:8000/user/Login',this.form,{withCredentials:true}).then((res)=>{
+            axios.post('http://localhost:8000/stu/Login',this.form,{withCredentials:true}).then((res)=>{
                 console.log(res)
               if(res.code == 404){
                   this.tishi = "该用户不存在"
@@ -72,9 +73,9 @@ export default {
               }else if(res.data == 200){
                   this.tishi = "登录成功"
                   this.showTishi = true
-                  setCookie('username',this.username,1000*60)
+                  setCookie('username','stu'+this.username,1000*60)
                   setTimeout(function(){
-                      this.$router.push('/main')
+                      this.$router.push('/stuMain')
                   }.bind(this),1000)
               }
           })
