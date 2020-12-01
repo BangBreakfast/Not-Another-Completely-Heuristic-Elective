@@ -11,21 +11,28 @@
     </div>
 </template>
 <script>
+import {getCookie} from '../../assets/js/cookies.js'
 export default {
-    data() {
-      let res=1
-      if(this.$route.path === '\/stuMain')
-        res=1;
-      else if(this.$route.path === '\/stuPersonal')
-        res=2;
-      else if(this.$route.path === '\/stuCourseSearch')
-        res=3;
-      else if(this.$route.path === '\/stuProgram')
-        res=4;
-      return {
-        activeIndex: res.toString(),
-      };
-    },
+  data () {
+    let res = 1
+    if (this.$route.path === '/stuMain') {
+      res = 1
+    } else if (this.$route.path === '/stuPersonal') {
+      res = 2
+    } else if (this.$route.path === '/stuCourseSearch') {
+      res = 3
+    } else if (this.$route.path === '/stuProgram') {
+      res = 4
+    }
+    return {
+      activeIndex: res.toString()
+    }
+  },
+  mounted () {
+    if (getCookie('username').substring(0, 3) !== 'stu') {
+      this.$router.push('/stuLogin')
+    }
+  }
 }
 </script>
 <style lang="postcss" scoped>

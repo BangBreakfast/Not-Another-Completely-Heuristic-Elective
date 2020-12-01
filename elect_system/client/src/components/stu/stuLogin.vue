@@ -28,14 +28,13 @@
 </template>
 
 <script>
-import {setCookie,getCookie} from '../../assets/js/cookies.js'
+import {setCookie, getCookie} from '../../assets/js/cookies.js'
 import axios from 'axios'
 export default {
   name: 'Login',
-  mounted(){
-  /*页面挂载获取cookie，如果存在username的cookie，且前五位是admin，则跳转到主页，不需登录*/
-    if(getCookie('username').substring(0,3)=="stu"){
-        this.$router.push('/stuMain')
+  mounted () {
+    if (getCookie('username').substring(0, 3) === 'stu') {
+      this.$router.push('/stuMain')
     }
   },
   data () {
@@ -57,28 +56,27 @@ export default {
   },
   methods: {
     stuLogin () {
-        if(this.username == "" || this.password == ""){
-            alert("请输入用户名或密码")
-        }else{
-            let data = {'username':this.username,'password':this.password}
-            /*接口请求*/
-            axios.post('http://localhost:8000/stu/Login',this.form,{withCredentials:true}).then((res)=>{
-                console.log(res)
-              if(res.code == 404){
-                  this.tishi = "该用户不存在"
-                  this.showTishi = true
-              }else if(res.data == -200){
-                  this.tishi = "密码输入错误"
-                  this.showTishi = true
-              }else if(res.data == 200){
-                  this.tishi = "登录成功"
-                  this.showTishi = true
-                  setCookie('username','stu'+this.username,1000*60)
-                  setTimeout(function(){
-                      this.$router.push('/stuMain')
-                  }.bind(this),1000)
-              }
-          })
+      if (this.username === '' || this.password === '') {
+        alert('请输入用户名或密码')
+      } else {
+        /* 接口请求 */
+        axios.post('http://localhost:8000/stu/Login', this.form, {withCredentials: true}).then((res) => {
+          console.log(res)
+          if (res.code === 404) {
+            this.tishi = '该用户不存在'
+            this.showTishi = true
+          } else if (res.data === -200) {
+            this.tishi = '密码输入错误'
+            this.showTishi = true
+          } else if (res.data === 200) {
+            this.tishi = '登录成功'
+            this.showTishi = true
+            setCookie('username', 'stu' + this.username, 1000 * 60)
+            setTimeout(function () {
+              this.$router.push('/stuMain')
+            }.bind(this), 1000)
+          }
+        })
       }
     }
   }

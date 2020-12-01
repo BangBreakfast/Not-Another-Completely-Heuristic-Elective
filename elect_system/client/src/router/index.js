@@ -34,71 +34,71 @@ export default new Router({
       path: '/stu',
       name: 'stuCore',
       component: stuCore,
-      children:[
+      children: [
         {
-          path:'/stuProgram',
+          path: '/stuProgram',
           name: 'stuProgram',
-          component: stuProgram,
+          component: stuProgram
         },
         {
-          path:'/stuPersonal',
+          path: '/stuPersonal',
           name: 'stuPersonal',
-          component: stuPersonal,
+          component: stuPersonal
         },
         {
-          path:'/stuCourseSearch',
+          path: '/stuCourseSearch',
           name: 'stuCourseSearch',
           component: stuCourseSearch
         },
         {
-          path:'/stuMain',
+          path: '/stuMain',
           name: 'stuMain',
           component: stuMain
-        },
+        }
       ]
     },
     {
       path: '/stuLogin',
       name: 'stuLogin',
-      component: stuLogin,
+      component: stuLogin
     },
     // AdminComponent
     {
       path: '/admin',
       name: 'adminCore',
       component: adminCore,
-      children:[
+      children: [
         {
-          path:'/adminProgram',
+          path: '/adminProgram',
           name: 'adminProgram',
-          component: adminProgram,
+          component: adminProgram
         },
         {
-          path:'/adminManual',
+          path: '/adminManual',
           name: 'adminManual',
-          component: adminManual,
+          component: adminManual
         },
         {
-          path:'/adminCourseSearch',
+          path: '/adminCourseSearch',
           name: 'adminCourseSearch',
           component: adminCourseSearch
         },
         {
-          path:'/adminMain',
+          path: '/adminMain',
           name: 'adminMain',
           component: adminMain
         },
         {
-          path:'/adminTime',
+          path: '/adminTime',
           name: 'adminTime',
           component: adminTime
-        },
+        }
       ]
     },
     {
       path: '/adminLogin',
       name: 'adminLogin',
-      component: adminLogin,
-    },
+      component: adminLogin
+    }
   ]
 })

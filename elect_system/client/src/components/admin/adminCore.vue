@@ -12,23 +12,29 @@
     </div>
 </template>
 <script>
+import {getCookie} from '../../assets/js/cookies.js'
 export default {
-    data() {
-      let res=1
-      if(this.$route.path === '\/adminMain')
-        res=1;
-      else if(this.$route.path === '\/adminManual')
-        res=2;
-      else if(this.$route.path === '\/adminCourseSearch')
-        res=3;
-      else if(this.$route.path === '\/adminProgram')
-        res=4;
-      else if(this.$route.path === '\/adminTime')
-        res=5;
-      return {
-        activeIndex: res.toString(),
-      };
-    },
+  data () {
+    let res = 1
+    if (this.$route.path === '/adminMain') {
+      res = 1
+    } else if (this.$route.path === '/adminManual') {
+      res = 2
+    } else if (this.$route.path === '/adminCourseSearch') {
+      res = 3
+    } else if (this.$route.path === '/adminProgram') {
+      res = 4
+    } else if (this.$route.path === '/adminTime') {
+      res = 5
+    } return {
+      activeIndex: res.toString()
+    }
+  },
+  mounted () {
+    if (getCookie('username').substring(0, 5) !== 'admin') {
+      this.$router.push('/adminLogin')
+    }
+  }
 }
 </script>
 <style lang="postcss" scoped>
