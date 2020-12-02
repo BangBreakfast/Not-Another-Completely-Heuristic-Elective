@@ -1,44 +1,93 @@
 # API DOC
+
 ## JSON
+
 ### 登录
 
-/stu
-	/stu/login 
-/admin
-    /admin/login
-    
-```json
+- Method: POST
+- Paths: /stu/login, /dean/login
+- Request body
 
-发送
+```json
 request.body = {
     "username": string,
     "password": string
 }
+```
 
-返回
-// 成功：
+- Response body
+
+```json
+// Login success
 {
-    "code": 200,
-    "data": {
-        "msg": "success"
-    }
+	"success": true,
+	"msg": "Successfully login"
 }
-// 用户不存在
+// Auth fail
 {
-    "code": 404,
-    "data": {
-        "msg": "unknown"
-    }
+    "success": false,
+    "msg": "Incorrect password or nonexist user"
 }
-//失败
+// Json format error
 {
-    "code": -200,
-    "data": {
-        "msg": "fail"
-    }
+    "success": false,
+    "msg": "Json format error"
+}
+// Parameter error
+{
+    "success": false,
+    "msg": "Wrong parameter"
+}
+// Wrong method
+{
+    "success": false,
+    "msg": "Wrong method"
 }
 ```
 
+### 退出
+
+- Method: POST
+- Paths: /stu/logout, /dean/logout
+- Request body: (empty)
+- Response body:
+```json
+// ok
+{
+    "success": true,
+    "msg": "Successfully logout"
+}
+// Wrong method
+{
+	"success": false,
+	"msg": "Wrong method"
+}
+```
+### 获取时间信息
+- Method: Get
+- Paths: time/timetable.json
+- Request body: (empty)
+- Response body:
+```json 
+[
+    // 具体的时间
+    {
+    "date":string, 
+    // 时间的内容：选课节点等
+    "detail":string,
+    // 备注信息：开放跨院系选课等
+    "info":string
+    },
+    {
+    "date":string, 
+    // 时间的内容：选课节点等
+    "detail":string,
+    // 备注信息：开放跨院系选课等
+    "info":string
+    },
+    ...
+]
+```
 ### Response Body Fudanmental
 ``` json
 // 通用：

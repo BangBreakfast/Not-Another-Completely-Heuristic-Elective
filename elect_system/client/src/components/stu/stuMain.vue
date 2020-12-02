@@ -14,12 +14,12 @@
           width="180">
         </el-table-column>
         <el-table-column
-          prop="name"
+          prop="detail"
           label="详细时间信息"
           width="360">
         </el-table-column>
         <el-table-column
-          prop="address"
+          prop="info"
           label="备注">
         </el-table-column>
         </el-table>
@@ -31,8 +31,19 @@
 </template>
 
 <script>
+import axios from 'axios'
+let tableData
 export default {
-  name: 'Main'
+  name: 'Main',
+  data () {
+    return tableData
+  },
+  mounted () {
+    axios.get('http://localhost:8000/stu/Login').then(response => (this.tableData = response))
+      .catch(function (error) { // 请求失败处理
+        console.log(error)
+      })
+  }
 }
 </script>
 
