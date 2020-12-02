@@ -88,6 +88,19 @@ request.body = {
     ...
 ]
 ```
+### 获取课表信息
+- Method: Post
+- Paths: /stu/PersonalCourse
+- Request body: (stuID)
+- Response body:
+```json
+{
+    // 三组数据按照，都是[7][13]的数组，里面都是string
+    "courses":[[1,1,1,...],...],
+    "detail":[[1,1,1,...],...],
+    "willpoint":[[1,1,1,...],...],
+}
+```
 ### Response Body Fudanmental
 ``` json
 // 通用：

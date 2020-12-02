@@ -32,14 +32,20 @@
 
 <script>
 import axios from 'axios'
-let tableData
+let Data = [
+  {
+    date: '昨天',
+    detail: '暂无',
+    info: '嗝'
+  }
+]
 export default {
   name: 'Main',
   data () {
-    return tableData
+    return {tableData: Data}
   },
   mounted () {
-    axios.get('http://localhost:8000/stu/Login').then(response => (this.tableData = response))
+    axios.get('http://localhost:8000/stu/Login').then(response => (this.Data = response))
       .catch(function (error) { // 请求失败处理
         console.log(error)
       })
