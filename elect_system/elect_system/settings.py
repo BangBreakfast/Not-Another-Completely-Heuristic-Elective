@@ -11,10 +11,10 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
@@ -25,7 +25,7 @@ SECRET_KEY = 'd@a(qr#9g9u_g40gt*nn=g#yh6!ibkcq$1_ow-bt87sy0=s#8#'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'elect_system.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-		'NAME': 'electiveSystem',
+		'NAME': 'elective',
 		'HOST': '127.0.0.1',
 		'PORT': '3306',
 		'USER': 'root',
@@ -111,7 +111,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
@@ -124,3 +124,51 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+BASE_LOG_DIR = os.path.join(BASE_DIR, "log")
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {	# Detailed logs printed into log file
+            'format': '%(asctime)s [%(levelname)s] [%(threadName)s] [task_id:%(name)s] [%(filename)s:%(lineno)d]'
+                      ' %(message)s'
+        },
+        'simple': {		# Simple logs printed on console
+            'format': '%(asctime)s [%(levelname)s] [%(filename)s:%(lineno)d] %(message)s'
+        },
+    },
+
+    'filters': {
+        'require_debug_true': {	# print logs only if debug=True
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+
+    'handlers': {
+        'console': {			# Simple logs printed on console
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'default': {
+            'level': 'INFO',	# Do not put DEBUG logs in file
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_LOG_DIR, "info.log"),
+            'maxBytes': 1024 * 1024 * 50, # 50MB
+            'backupCount': 3,
+            'formatter': 'standard',
+            'encoding': 'utf-8',
+        },
+    },
+
+    'loggers': {
+        '': {
+            'handlers': ['default', 'console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}

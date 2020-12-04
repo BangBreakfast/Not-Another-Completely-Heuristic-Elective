@@ -1,9 +1,12 @@
 from django.db import models
+from django.shortcuts import redirect
 from django.http import HttpResponse, JsonResponse, HttpRequest
 from django.views.decorators.csrf import csrf_exempt
-import json, traceback
+import json, traceback, logging
 import django.contrib.auth as auth
 from .models import Stu
+
+logger = logging.getLogger(__name__)
 
 @csrf_exempt
 def comingSoon(request: HttpRequest):
@@ -74,7 +77,10 @@ def logout(request: HttpRequest):
 
 @csrf_exempt
 def test(request: HttpRequest):
+	print(request.session.values())
+	print(request.COOKIES)
 	if request.user.is_authenticated:
 		return JsonResponse({'success': True, 'msg':'This is an authenticated stu',})
 	else:
+		logger.warning('Unregistered user')
 		return JsonResponse({'success': False, 'msg':'Please login first',})
