@@ -26,20 +26,30 @@
         </el-col>
         <el-col :span="3"><div class="grid-content bg-purple"></div></el-col>
         </el-row>
+            <el-divider></el-divider>
+        <el-row style="border-radius: 2px box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1)">
+          还没有注意事项哦！
+        </el-row>
       </el-main>
     </div>
 </template>
 
 <script>
 import axios from 'axios'
-let tableData
+let Data = [
+  {
+    date: '昨天',
+    detail: '暂无',
+    info: '嗝'
+  }
+]
 export default {
   name: 'Main',
   data () {
-    return tableData
+    return {tableData: Data}
   },
   mounted () {
-    axios.get('http://localhost:8000/stu/Login').then(response => (this.tableData = response))
+    axios.get('http://localhost:8000/time/timetable.json').then(response => (this.Data = response))
       .catch(function (error) { // 请求失败处理
         console.log(error)
       })

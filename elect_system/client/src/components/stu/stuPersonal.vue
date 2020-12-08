@@ -18,8 +18,15 @@
                             </td>
 
                             <td v-for="(course, courseIndex) in classTableData.courses" :key="courseIndex">
-                                <el-row>{{classTableData.courses[courseIndex][lessonIndex]|| '-'}}</el-row>
-                                <span class="willpoint" v-if="classTableData.courses[courseIndex][lessonIndex]!==''">意愿点：{{classTableData.willing[courseIndex][lessonIndex]}}</span>
+                                <el-row class="coursename">{{classTableData.courses[courseIndex][lessonIndex]|| '-'}}</el-row>
+                                <el-row v-if="classTableData.courses[courseIndex][lessonIndex]!==''">
+                                    <span class="willpoint">意愿点：</span>
+                                    <el-input type="number" size="mini" oninput="if(value>100)value=100;if(value<0)value=0" v-model="classTableData.willing[courseIndex][lessonIndex]" max="100" min="0" class="block">
+                                </el-input>
+                                </el-row>
+                                <el-row v-if="classTableData.courses[courseIndex][lessonIndex]!==''">
+                                    <el-button size=mini type="primary" @click="modify(courseIndex,lessonIndex)" >修改</el-button>
+                                 </el-row>
                                 <el-row>
                                     {{classTableData.details[courseIndex][lessonIndex]|| '-'}}
                                 </el-row>
@@ -32,7 +39,7 @@
                                         <div style="text-align: center; margin: 0">
                                             <p class="willpoint">将返还意愿点:{{classTableData.willing[courseIndex][lessonIndex]}}。</p>
                                             <p>是否决定退课？</p>
-                                            <el-button type="primary" size="mini" @click="false">确定</el-button>
+                                            <el-button type="primary" size="mini" @click="remove(courseIndex,lessonIndex)">确定</el-button>
                                         </div>
                                     <el-button size=mini type="danger" slot="reference">退课</el-button>
                                 </el-popover>
@@ -46,6 +53,8 @@
 </template>
 
 <script>
+import axios from 'axios'
+import {getCookie} from '../../assets/js/cookies.js'
 export default {
   data () {
     return {
@@ -73,7 +82,7 @@ export default {
           ['语文', '数学', '英语', '', '', '', '', '','','','',''],
           ['', '', '', '', '', '', '', '','','','','']
         ],
-        details:[
+        details: [
           ['fff', '物理', '化学', '政治', '历史', '英语', '', '语文','','','',''],
           ['zzzz', '数学', '英语', '历史', '', '化学', '物理', '生物','','','',''],
           ['miao', '', '化学', '政治', '历史', '英语', '数学', '语文','','','',''],
@@ -82,7 +91,16 @@ export default {
           ['aofuaofu', '数学', '英语', '', '', '', '', '','','','',''],
           ['', '', '', '', '', '', '', '','','','','']
         ],
-        willing:[
+        willing: [
+          ['1', '1', '2', '2', '3', '3', '', '1', '', '', '', ''],
+          ['1', '1', '2', '2', '', '3', '4', '2', '', '', '', ''],
+          ['1', '', '2', '2', '3', '3', '5', '3', '', '', '', ''],
+          ['1', '2', '2', '2', '3', '', '6', '4', '', '', '', ''],
+          ['1', '2', '2', '', '3', '5', '6', '5', '', '', '', ''],
+          ['1', '2', '2', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', '']
+        ],
+        id: [
           ['1', '1', '2', '2', '3', '3', '', '1', '', '', '', ''],
           ['1', '1', '2', '2', '', '3', '4', '2', '', '', '', ''],
           ['1', '', '2', '2', '3', '3', '5', '3', '', '', '', ''],
@@ -94,12 +112,9 @@ export default {
       }
     }
   },
-  created () {
-    // /* mock随机数据*/
-    // Mock.mock({
-    //     lessons: ['08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00', '13:00-14:00', '14:00-15:00', '15:00-16:00', '16:00-17:00'],
-    //     'courses|7': [['生物', '物理', '化学', '政治', '历史', '英语', '', '语文']]
-    // });
+  mounted () {
+    let username = getCookie('username').substring(3)
+    axios.post('http://localhost:8000/stu/PersonalCourse', {'username': username}).then(response => (this.classTableData = response))
   },
   methods: {
     /**
@@ -110,9 +125,15 @@ export default {
     */
     digital2Chinese (num, identifier) {
       const character = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三']
-      return identifier === 'week' && (num === 7) ? '日' : character[num]
+      return identifier === 'week' && (num === 6) ? '日' : character[num]
+    },
+    modify (courseIndex, lessonIndex) {
+      axios.post('http://localhost:8000/stu/PersonalCourse', {'courseid': this.classTableData.id[courseIndex][lessonIndex], 'willpoint': this.classTableData.willing[courseIndex][lessonIndex], 'type': 2}).then(response => (this.$router.go(0)))
+    },
+    remove (courseIndex, lessonIndex) {
+      axios.post('http://localhost:8000/stu/PersonalCourse', {'courseid': this.classTableData.id[courseIndex][lessonIndex], 'willpoint': this.classTableData.willing[courseIndex][lessonIndex], 'type': 1}).then(response => (this.$router.go(0)))
     }
-}
+  }
 }
 </script>
 
@@ -125,8 +146,8 @@ export default {
     }
     .tabel-container {
         margin: 7px;
-
         table {
+
             table-layout: fixed;
             width: 100%;
 
@@ -168,6 +189,13 @@ export default {
                 color: #555;
                 font-size:  px;
                 padding: 15px 15px auto;
+            }
+            .coursename{
+                font-size: 14px;
+                color: #133;
+            }
+            .block{
+                width:65px;
             }
         }
     }
