@@ -1,5 +1,10 @@
 <template>
     <div class="class-table">
+
+        <el-row>
+            您剩余的意愿点:{{willpoint()}}
+        </el-row>
+        <el-divider></el-divider>
         <div class="table-wrapper">
             <div class="tabel-container">
 
@@ -21,19 +26,14 @@
                                 <el-row class="coursename">{{classTableData.courses[courseIndex][lessonIndex]|| '-'}}</el-row>
                                 <el-row v-if="classTableData.courses[courseIndex][lessonIndex]!==''">
                                     <span class="willpoint">意愿点：</span>
-                                    <el-input type="number" size="mini" oninput="if(value>100)value=100;if(value<0)value=0" v-model="classTableData.willing[courseIndex][lessonIndex]" max="100" min="0" class="block">
+                                    <el-input type="number" size="mini" oninput="if(value>100=100;if(value<0)value=0" v-model="classTableData.willing[courseIndex][lessonIndex]" max="100" min="0" class="block">
                                 </el-input>
                                 </el-row>
                                 <el-row v-if="classTableData.courses[courseIndex][lessonIndex]!==''">
                                     <el-button size=mini type="primary" @click="modify(courseIndex,lessonIndex)" >修改</el-button>
-                                 </el-row>
-                                <el-row>
-                                    {{classTableData.details[courseIndex][lessonIndex]|| '-'}}
-                                </el-row>
-                                <el-popover placement="bottom"
+                                    <el-popover placement="bottom"
                                         width="100"
                                         triger="click"
-                                        v-if="classTableData.courses[courseIndex][lessonIndex]!==''"
                                         v-model="visible"
                                         >
                                         <div style="text-align: center; margin: 0">
@@ -43,6 +43,8 @@
                                         </div>
                                     <el-button size=mini type="danger" slot="reference">退课</el-button>
                                 </el-popover>
+                                </el-row>
+                                <el-row> {{classTableData.details[courseIndex][lessonIndex]|| '-'}}</el-row>
                             </td>
                         </tr>
                     </tbody>
@@ -132,6 +134,15 @@ export default {
     },
     remove (courseIndex, lessonIndex) {
       axios.post('http://localhost:8000/stu/PersonalCourse', {'courseid': this.classTableData.id[courseIndex][lessonIndex], 'willpoint': this.classTableData.willing[courseIndex][lessonIndex], 'type': 1}).then(response => (this.$router.go(0)))
+    },
+    willpoint () {
+      let will = 100
+      for (let i in this.classTableData.id) {
+        if (i !== '') {
+          will = will - Number(i)
+        }
+      }
+      return will
     }
   }
 }
