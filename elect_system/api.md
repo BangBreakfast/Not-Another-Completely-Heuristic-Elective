@@ -2,7 +2,7 @@
 
 ## JSON
 
-### 登录
+### stu, dean 登录
 
 - Method: POST
 - Paths: /stu/login, /dean/login
@@ -45,12 +45,13 @@ request.body = {
 }
 ```
 
-### 退出
+### stu, dean 退出
 
 - Method: POST
 - Paths: /stu/logout, /dean/logout
 - Request body: (empty)
 - Response body:
+
 ```json
 // ok
 {
@@ -61,6 +62,28 @@ request.body = {
 {
 	"success": false,
 	"msg": "Wrong method"
+}
+```
+
+### stu 修改密码
+
+#### Get Verification Code
+
+- Method: __GET__
+- Path: /stu/chpasswd?stuId=1600013239
+- Request body: null
+
+#### Send Verification Code
+
+- Method: __POST__
+- Path: /stu/chpasswd
+- Request body:
+
+```json
+{
+	"stuId": "1600013239",
+	"password": "123456",	// new password
+	"vcode": "1234"
 }
 ```
 

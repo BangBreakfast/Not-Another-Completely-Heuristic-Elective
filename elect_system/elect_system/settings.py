@@ -37,8 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-	'dean',
-	'stu',
+    'user',
 ]
 
 MIDDLEWARE = [
@@ -78,11 +77,11 @@ WSGI_APPLICATION = 'elect_system.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-		'NAME': 'elective',
-		'HOST': '127.0.0.1',
-		'PORT': '3306',
-		'USER': 'root',
-		'PASSWORD': 'jiangyan',
+        'NAME': 'elective',
+                'HOST': '127.0.0.1',
+                'PORT': '3306',
+                'USER': 'root',
+                'PASSWORD': 'jiangyan',
     }
 }
 
@@ -131,7 +130,7 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'standard': {	# Detailed logs printed into log file
+        'standard': {  # Detailed logs printed into log file
             'format': '%(asctime)s [%(levelname)s] [%(threadName)s] [task_id:%(name)s] [%(filename)s:%(lineno)d]'
                       ' %(message)s'
         },
@@ -141,7 +140,7 @@ LOGGING = {
     },
 
     'filters': {
-        'require_debug_true': {	# print logs only if debug=True
+        'require_debug_true': {  # print logs only if debug=True
             '()': 'django.utils.log.RequireDebugTrue',
         },
     },
@@ -154,10 +153,10 @@ LOGGING = {
             'formatter': 'simple'
         },
         'default': {
-            'level': 'INFO',	# Do not put DEBUG logs in file
+            'level': 'INFO',  # Do not put DEBUG logs in file
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_LOG_DIR, "info.log"),
-            'maxBytes': 1024 * 1024 * 50, # 50MB
+            'maxBytes': 1024 * 1024 * 50,  # 50MB
             'backupCount': 3,
             'formatter': 'standard',
             'encoding': 'utf-8',
@@ -172,3 +171,10 @@ LOGGING = {
         },
     },
 }
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.163.com'
+EMAIL_PORT = 25
+EMAIL_USE_TLS = False
+EMAIL_HOST_USER = 'pku_elective@163.com'
+EMAIL_HOST_PASSWORD = 'SEKJWOHPKSROJKMV'
