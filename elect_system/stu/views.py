@@ -15,6 +15,20 @@ def comingSoon(request: HttpRequest):
 	}
 	return JsonResponse(response)
 
+@csrf_exempt
+def willpoint(request: HttpRequest):
+	if request.user.is_authenticated:
+		reqData = json.loads(request.body.decode())
+		username = reqData['username']
+		stu = Stu.objects.get(username=username)
+
+		#user_id = request.user.id
+		#stu = Stu.objects.get(id=user_id)
+		return JsonResponse({"willpoint": stu.willpoint,})
+	else:
+		logger.warning('Unregistered user')
+		return JsonResponse({'success': False, 'msg':'Please login first',})
+
 def FetchIdAndPasswd(request: HttpRequest):
 	reqData = {}
 	try:

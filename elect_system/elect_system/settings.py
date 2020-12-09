@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 	'dean',
 	'stu',
+    'course',
 ]
 
 MIDDLEWARE = [
@@ -82,7 +83,7 @@ DATABASES = {
 		'HOST': '127.0.0.1',
 		'PORT': '3306',
 		'USER': 'root',
-		'PASSWORD': 'jiangyan',
+		'PASSWORD': '123',
     }
 }
 

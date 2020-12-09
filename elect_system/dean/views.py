@@ -4,6 +4,75 @@ from django.views.decorators.csrf import csrf_exempt
 import json, traceback
 import django.contrib.auth as auth
 from .models import Dean
+from course.models import Course
+from course.models import Elect
+
+from django.shortcuts import render
+from django.http import HttpResponse, JsonResponse, HttpRequest
+from django.http import response
+from django.views.decorators.csrf import csrf_exempt
+import json, traceback
+import django.contrib.auth as auth
+# Create your views here.
+from course.models import Course, Elect
+
+
+def check_add_course_format(reqData):
+	'''
+	Json 格式检查，形式如下面这样
+	{
+	   "course_name":{
+			"name": string,   // 课程名称
+			"time": string,   // 上课时间
+			"info": string,   // 课程简单介绍
+			"capacity": int   //课程最大容量
+    	}
+    }
+    格式正确返回 True 错误返回 False
+	'''
+	#TODO
+	return True
+
+@csrf_exempt
+def addCourse(request: HttpRequest):
+	if not request.user.is_authenticated:
+		return JsonResponse({'success': False, 'msg': 'Please login first', })
+	if request.method != 'POST':
+		return JsonResponse({'success':False, 'msg':'Wrong method'})
+
+	try:
+		reqData = json.loads(request.body.decode())
+	except:
+		traceback.print_exc()
+		return JsonResponse({'success':False, 'msg':'json load failed'})
+
+	if not check_add_course_format(reqData):   #TODO
+		return JsonResponse({'success':False, 'msg':'Json format Wrong'})
+
+	for name, info in reqData.items():
+		course = Course()
+		course.name = info['name']
+		course.time = info['time']
+		course.info = info['info']
+
+		elect = Elect()
+		elect.course = course
+		elect.capacity = info['capacity']
+
+		try:
+			course.save()
+			elect.save()
+		except:
+			response = {
+				"success": False,
+				"msg": 'save failed'
+			}
+			return JsonResponse(response)
+
+
+	return JsonResponse({'success': True, 'msg': 'Add course success!', })
+
+
 
 @csrf_exempt
 def comingSoon(request: HttpRequest):

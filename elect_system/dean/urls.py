@@ -8,4 +8,5 @@ urlpatterns = [
     path('logout', views.logout),
     path('test', views.test),
 	path('createStu', views.comingSoon),
+    path('addcourse', views.addCourse),
 ]
