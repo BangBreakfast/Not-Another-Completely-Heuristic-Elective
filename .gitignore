@@ -2,3 +2,4 @@ __pycache__/
 migrations/
 elect_system/log/*
 .vscode/
+.idea/

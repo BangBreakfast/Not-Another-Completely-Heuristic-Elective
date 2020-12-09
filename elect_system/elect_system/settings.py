@@ -37,7 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'user',
+	'dean',
+	'stu',
+    'course',
 ]
 
 MIDDLEWARE = [
@@ -77,11 +79,11 @@ WSGI_APPLICATION = 'elect_system.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'elective',
-                'HOST': '127.0.0.1',
-                'PORT': '3306',
-                'USER': 'root',
-                'PASSWORD': 'jiangyan',
+		'NAME': 'elective',
+		'HOST': '127.0.0.1',
+		'PORT': '3306',
+		'USER': 'root',
+		'PASSWORD': '123',
     }
 }
 
