@@ -14,12 +14,12 @@
           width="180">
         </el-table-column>
         <el-table-column
-          prop="detail"
+          prop="theme"
           label="详细时间信息"
           width="360">
         </el-table-column>
         <el-table-column
-          prop="info"
+          prop="detail"
           label="备注">
         </el-table-column>
         </el-table>
@@ -39,8 +39,8 @@ import axios from 'axios'
 let Data = [
   {
     date: '昨天',
-    detail: '暂无',
-    info: '嗝'
+    theme: '补推选1',
+    detail: '暂无'
   }
 ]
 export default {
@@ -49,7 +49,7 @@ export default {
     return {tableData: Data}
   },
   mounted () {
-    axios.get('http://localhost:8000/time/timetable.json').then(response => (this.Data = response))
+    axios.get('http://localhost:8000/phases').then(response => (this.Data = response))
       .catch(function (error) { // 请求失败处理
         console.log(error)
       })

@@ -24,27 +24,48 @@
 
                             <td v-for="(course, courseIndex) in classTableData.courses" :key="courseIndex">
                                 <el-row class="coursename">{{classTableData.courses[courseIndex][lessonIndex]|| '-'}}</el-row>
-                                <el-row v-if="classTableData.courses[courseIndex][lessonIndex]!==''">
-                                    <span class="willpoint">意愿点：</span>
-                                    <el-input type="number" size="mini" oninput="if(value>100=100;if(value<0)value=0" v-model="classTableData.willing[courseIndex][lessonIndex]" max="100" min="0" class="block">
-                                </el-input>
+                                <el-row v-if="classTableData.courses[courseIndex][lessonIndex]!=='' && classTableData.status[courseIndex][lessonIndex]==1">
+                                    <el-col v-if="classTableData.courses[courseIndex][lessonIndex]!==''">
+                                        <span class="willpoint">意愿点：</span>
+                                        <el-input type="number" size="mini" oninput="if(value>99=99;if(value<0)value=0" v-model="classTableData.willing[courseIndex][lessonIndex]" max="100" min="0" class="block">
+                                        </el-input>
+                                    </el-col>
+                                    <el-col>
+                                        <el-button size=mini type="primary" @click="modify(courseIndex,lessonIndex)" >修改</el-button>
+                                        <el-popover placement="bottom"
+                                            width="100"
+                                            triger="click"
+                                            v-model="visible"
+                                            >
+                                            <div style="text-align: center; margin: 0">
+                                                <p>是否决定把课程从选课队列中移除？</p>
+                                                <el-button type="primary" size="mini" @click="remove(courseIndex,lessonIndex)">确定</el-button>
+                                            </div>
+                                        <el-button size=mini type="danger" slot="reference">退课</el-button>
+                                        </el-popover>
+                                    </el-col>
                                 </el-row>
-                                <el-row v-if="classTableData.courses[courseIndex][lessonIndex]!==''">
-                                    <el-button size=mini type="primary" @click="modify(courseIndex,lessonIndex)" >修改</el-button>
+                                <el-row v-if="classTableData.courses[courseIndex][lessonIndex]!==''&&classTableData.status[courseIndex][lessonIndex]==2">
+                                    <el-col v-if="classTableData.courses[courseIndex][lessonIndex]!==''">
+                                        <span class="willpoint">意愿点：</span>
+                                        <el-input type="number" size="mini" disabled="true" oninput="if(value>99=99;if(value<0)value=0" v-model="classTableData.willing[courseIndex][lessonIndex]" max="100" min="0" class="block">
+                                        </el-input>
+                                    </el-col>
                                     <el-popover placement="bottom"
                                         width="100"
                                         triger="click"
                                         v-model="visible"
                                         >
                                         <div style="text-align: center; margin: 0">
-                                            <p class="willpoint">将返还意愿点:{{classTableData.willing[courseIndex][lessonIndex]}}。</p>
+                                            <p>将返回意愿点{{lassTableData.willing[courseIndex][lessonIndex]}}</p>
                                             <p>是否决定退课？</p>
-                                            <el-button type="primary" size="mini" @click="remove(courseIndex,lessonIndex)">确定</el-button>
+                                            <el-button type="primary" size="mini" @click="drop(courseIndex,lessonIndex)">确定</el-button>
                                         </div>
                                     <el-button size=mini type="danger" slot="reference">退课</el-button>
                                 </el-popover>
                                 </el-row>
                                 <el-row> {{classTableData.details[courseIndex][lessonIndex]|| '-'}}</el-row>
+                                <el-row> {{classTableData.election_detail[courseIndex][lessonIndex]|| '-'}}</el-row>
                             </td>
                         </tr>
                     </tbody>
@@ -60,6 +81,7 @@ import {getCookie} from '../../assets/js/cookies.js'
 export default {
   data () {
     return {
+      dept: [],
       classTableData: {
         lessons: [
           '08:00-08:50',
@@ -76,39 +98,57 @@ export default {
           '20:40-21:30'
         ],
         courses: [
-          ['生物', '物理', '化学', '政治', '历史', '英语', '', '语文','','','',''],
-          ['语文', '数学', '英语', '历史', '', '化学', '物理', '生物','','','',''],
-          ['生物', '', '化学', '政治', '历史', '英语', '数学', '语文','','','',''],
-          ['语文', '数学', '英语', '历史', '政治', '', '物理', '生物','','','',''],
-          ['生物', '物理', '化学', '', '历史', '英语', '数学', '语文','','','',''],
-          ['语文', '数学', '英语', '', '', '', '', '','','','',''],
-          ['', '', '', '', '', '', '', '','','','','']
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', '']
         ],
         details: [
-          ['fff', '物理', '化学', '政治', '历史', '英语', '', '语文','','','',''],
-          ['zzzz', '数学', '英语', '历史', '', '化学', '物理', '生物','','','',''],
-          ['miao', '', '化学', '政治', '历史', '英语', '数学', '语文','','','',''],
-          ['mer', '数学', '英语', '历史', '政治', '', '物理', '生物','','','',''],
-          ['luelue', '物理', '化学', '', '历史', '英语', '数学', '语文','','','',''],
-          ['aofuaofu', '数学', '英语', '', '', '', '', '','','','',''],
-          ['', '', '', '', '', '', '', '','','','','']
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', '']
         ],
         willing: [
-          ['1', '1', '2', '2', '3', '3', '', '1', '', '', '', ''],
-          ['1', '1', '2', '2', '', '3', '4', '2', '', '', '', ''],
-          ['1', '', '2', '2', '3', '3', '5', '3', '', '', '', ''],
-          ['1', '2', '2', '2', '3', '', '6', '4', '', '', '', ''],
-          ['1', '2', '2', '', '3', '5', '6', '5', '', '', '', ''],
-          ['1', '2', '2', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', '']
+        ],
+        election_status: [
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', '']
+        ],
+        election_detail: [
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
           ['', '', '', '', '', '', '', '', '', '', '', '']
         ],
         id: [
-          ['1', '1', '2', '2', '3', '3', '', '1', '', '', '', ''],
-          ['1', '1', '2', '2', '', '3', '4', '2', '', '', '', ''],
-          ['1', '', '2', '2', '3', '3', '5', '3', '', '', '', ''],
-          ['1', '2', '2', '2', '3', '', '6', '4', '', '', '', ''],
-          ['1', '2', '2', '', '3', '5', '6', '5', '', '', '', ''],
-          ['1', '2', '2', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', '', '', '', '', '', ''],
           ['', '', '', '', '', '', '', '', '', '', '', '']
         ]
       }
@@ -116,7 +156,26 @@ export default {
   },
   mounted () {
     let username = getCookie('username').substring(3)
-    axios.post('http://localhost:8000/stu/PersonalCourse', {'username': username}).then(response => (this.classTableData = response))
+    axios.get('http://localhost:8000/election/schedule/' + username).then(response => {
+      if (response.success === 'true') {
+        for (var course in response.data) {
+          for (var time in course.times) {
+            var day = time.day - 1
+            var period = time.period - 1
+            this.classTableData.id[day][period] = course.course_id.toString()
+            this.classTableData.courses[day][period] = course.course_id.toString() + ':' + course.name
+            this.classTableData.credit[day][period] = '学分:' + course.credit
+            this.classTableData.lecturer[day][period] = this.classTableData.credit[day][period] + '\n讲师' + course.lecturer
+            this.classTableData.pos[day][period] = this.classTableData.credit[day][period] + '\n教室' + course.pos
+            this.classTableData.willing = course.election.willpoint
+            this.classTableData.status = course.election.status
+            this.classTableData.election_detail = '已选人数:' + course.election.elected_num.toString() + '\n课程容量' + course.election.capacity.toString() + '\n待抽签人数' + course.election.pending_num.toString()
+          }
+        }
+      } else {
+        alert('未知错误')
+      }
+    })
   },
   methods: {
     /**
@@ -130,16 +189,21 @@ export default {
       return identifier === 'week' && (num === 6) ? '日' : character[num]
     },
     modify (courseIndex, lessonIndex) {
-      axios.post('http://localhost:8000/stu/PersonalCourse', {'courseid': this.classTableData.id[courseIndex][lessonIndex], 'willpoint': this.classTableData.willing[courseIndex][lessonIndex], 'type': 2}).then(response => (this.$router.go(0)))
+      axios.post('http://localhost:8000/election', {'courseid': this.classTableData.id[courseIndex][lessonIndex], 'willpoint': this.classTableData.willing[courseIndex][lessonIndex], 'type': 1}).then(response => (this.$router.go(0)))
     },
     remove (courseIndex, lessonIndex) {
-      axios.post('http://localhost:8000/stu/PersonalCourse', {'courseid': this.classTableData.id[courseIndex][lessonIndex], 'willpoint': this.classTableData.willing[courseIndex][lessonIndex], 'type': 1}).then(response => (this.$router.go(0)))
+      axios.post('http://localhost:8000/election', {'courseid': this.classTableData.id[courseIndex][lessonIndex], 'willpoint': this.classTableData.willing[courseIndex][lessonIndex], 'type': 2}).then(response => (this.$router.go(0)))
+    },
+    drop (courseIndex, lessonIndex) {
+      axios.post('http://localhost:8000/election', {'courseid': this.classTableData.id[courseIndex][lessonIndex], 'willpoint': this.classTableData.willing[courseIndex][lessonIndex], 'type': 3}).then(response => (this.$router.go(0)))
     },
     willpoint () {
-      let will = 100
-      for (let i in this.classTableData.id) {
-        if (i !== '') {
-          will = will - Number(i)
+      let will = 99
+      for (let i in this.classTableData.willing) {
+        for (let j in i) {
+          if (j !== '') {
+            will = will - Number()
+          }
         }
       }
       return will
