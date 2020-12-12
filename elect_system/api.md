@@ -63,7 +63,44 @@ request.body = {
 	"msg": "Wrong method"
 }
 ```
-
+### 获取时间信息
+- Method: Get
+- Paths: time/timetable.json
+- Request body: (empty)
+- Response body:
+```json 
+[
+    // 具体的时间
+    {
+    "date":string, 
+    // 时间的内容：选课节点等
+    "detail":string,
+    // 备注信息：开放跨院系选课等
+    "info":string
+    },
+    {
+    "date":string, 
+    // 时间的内容：选课节点等
+    "detail":string,
+    // 备注信息：开放跨院系选课等
+    "info":string
+    },
+    ...
+]
+```
+### 获取课表信息
+- Method: Post
+- Paths: /stu/PersonalCourse
+- Request body: (stuID)
+- Response body:
+```json
+{
+    // 三组数据按照，都是[7][13]的数组，里面都是string
+    "courses":[[1,1,1,...],...],
+    "detail":[[1,1,1,...],...],
+    "willpoint":[[1,1,1,...],...],
+}
+```
 ### Response Body Fudanmental
 ``` json
 // 通用：
