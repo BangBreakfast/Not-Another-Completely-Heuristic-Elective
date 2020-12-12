@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 	'user',
-    'course',
+    # 'course',
     'phase',
 ]
 
@@ -84,7 +84,7 @@ DATABASES = {
 		'HOST': '127.0.0.1',
 		'PORT': '3306',
 		'USER': 'root',
-		'PASSWORD': 'jiangyan', 
+		'PASSWORD': 'xxxxxx', 
     }
 }
 
@@ -180,7 +180,7 @@ EMAIL_HOST = 'smtp.163.com'
 EMAIL_PORT = 25
 EMAIL_USE_TLS = False
 EMAIL_HOST_USER = 'pku_elective@163.com'
-EMAIL_HOST_PASSWORD = 'SEKJWOHPKSROJKMV'
+EMAIL_HOST_PASSWORD = 'xxxxxx'
 
 ERR_MSG = [
 	'JSON_FORMAT_ERROR',
@@ -196,3 +196,16 @@ class ERR_TYPE:
 	USER_404 = 'This user does not exist'
 	NOT_ALLOWED = 'User is not allowed to perform this operation'
 	UNKNOWN = "Unknown error"
+
+class ELE_TYPE:
+	ELECT = 0
+	EDIT_WP = 1
+	QUIT_PEDING = 2
+	DROP = 3
+
+class COURSE_TYPE:
+	MAJOR = 0
+	POLITICS = 3
+	GYM = 4
+	ENGLISH = 5
+	GENERAL = 6

@@ -1,26 +1,32 @@
-# from user.models import User
-# from django.db import models
-# import sys
-# sys.path.append("..")
-# '''
-# Course 类
+from user.models import User
+from django.db import models
+import sys
+sys.path.append("..")
+'''
+Course 类
 
-# 属性:
-#     course_id: 主键
-#     name: 课程名称
-#     time: 上课时间
-#     info: 课程信息
+属性:
+    course_id: 主键
+    name: 课程名称
+    time: 上课时间
+    info: 课程信息
 
-# 外键:
+外键:
 
-# '''
+'''
 
 
-# class Course(models.Model):
-#     course_id = models.AutoField(primary_key=True)
-#     name = models.CharField(max_length=2000, null=True)
-#     time = models.CharField(max_length=2000, null=True)
-#     info = models.CharField(max_length=2000, null=True)
+class Course(models.Model):
+    course_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=128, null=True)
+    credit = models.IntegerField(blank=False)
+    main_class = models.IntegerField()
+    sub_class = models.CharField(max_length=32)
+    time = models.CharField(max_length=256, null=True)
+    lecturer = models.CharField(max_length=128)
+    pos = models.CharField(max_length=128)
+    dept = models.IntegerField(blank=False)
+    detail = models.CharField(max_length=1024, null=True)
 
 
 # '''
