@@ -1,6 +1,7 @@
 <template>
   <div>
     <el-form ref="loginForm" :model="form" :rules="rules" label-width="80px" class="login-box">
+      <h2 class="login-title">学生登录系统</h2>
       <h3 class="login-title">欢迎登录</h3>
       <el-form-item label="账号" prop="username">
         <el-input type="text" placeholder="请输入账号" v-model="form.username"/>
@@ -9,26 +10,34 @@
         <el-input type="password" placeholder="请输入密码" v-model="form.password"/>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" v-on:click="onSubmit('loginForm')">登录</el-button>
+        <el-button v-on:click="link()">切换到教务系统</el-button>
+        <el-button type="primary" v-on:click="stuLogin()">登录</el-button>
       </el-form-item>
     </el-form>
 
     <el-dialog
       title="温馨提示"
-      :visible.sync="dialogVisible"
+      :visible.sync="showTishi"
       width="30%"
       :before-close="handleClose">
-      <span>请输入账号和密码</span>
+      <span>{{tishi}}</span>
       <span slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+        <el-button type="primary" @click="showTishi = false">确 定</el-button>
       </span>
     </el-dialog>
   </div>
 </template>
 
 <script>
+import {setCookie, getCookie} from '../../assets/js/cookies.js'
+import axios from 'axios'
 export default {
   name: 'Login',
+  mounted () {
+    if (getCookie('username').substring(0, 3) === 'stu') {
+      this.$router.push('/stuMain')
+    }
+  },
   data () {
     return {
       form: {
@@ -47,17 +56,29 @@ export default {
     }
   },
   methods: {
-    onSubmit (formName) {
-    // 为表单绑定验证功能
-      this.$refs[formName].validate((valid) => {
-        if (valid) {
-        // 使用 vue-router 路由到指定页面，该方式称之为编程式导航
-          this.$router.push('/main')
-        } else {
-          this.dialogVisible = true
-          return false
-        }
-      })
+    stuLogin () {
+      if (this.username === '' || this.password === '') {
+        alert('请输入用户名或密码')
+      } else {
+        /* 接口请求 */
+        axios.post('http://localhost:8000/stu/Login', this.form, {withCredentials: true}).then((res) => {
+          console.log(res)
+          if (res.success === false) {
+            this.tishi = '该用户不存在或者密码错误'
+            this.showTishi = true
+          } else if (res.success === true) {
+            this.tishi = '登录成功'
+            this.showTishi = true
+            setCookie('username', 'user' + this.username, 1000 * 60)
+            setTimeout(function () {
+              this.$router.push('/adminMain')
+            }.bind(this), 1000)
+          }
+        })
+      }
+    },
+    link () {
+      this.$router.push('/adminLogin')
     }
   }
 }
