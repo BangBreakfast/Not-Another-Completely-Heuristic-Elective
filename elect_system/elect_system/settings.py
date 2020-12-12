@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 from pathlib import Path
 import os
+from enum import Enum
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 	'user',
     'course',
+    'phase',
 ]
 
 MIDDLEWARE = [
@@ -70,7 +72,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'elect_system.wsgi.application'
-
+APPEND_SLASH=False 
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
@@ -82,7 +84,7 @@ DATABASES = {
 		'HOST': '127.0.0.1',
 		'PORT': '3306',
 		'USER': 'root',
-		'PASSWORD': 'jiangyan',
+		'PASSWORD': 'jiangyan', 
     }
 }
 
@@ -179,3 +181,18 @@ EMAIL_PORT = 25
 EMAIL_USE_TLS = False
 EMAIL_HOST_USER = 'pku_elective@163.com'
 EMAIL_HOST_PASSWORD = 'SEKJWOHPKSROJKMV'
+
+ERR_MSG = [
+	'JSON_FORMAT_ERROR',
+	''
+]
+
+class ERR_TYPE:
+	INVALID_METHOD = 'Invalid method'
+	JSON_ERR = 'Json format error'
+	PARAM_ERR = 'Wrong parameters'
+	AUTH_FAIL = 'Authentication failed'
+	USER_DUP = 'This user already exists'
+	USER_404 = 'This user does not exist'
+	NOT_ALLOWED = 'User is not allowed to perform this operation'
+	UNKNOWN = "Unknown error"

@@ -7,7 +7,9 @@ urlpatterns = [
     # path('register', views.register),	# Do not use this method in production environment
     path('login', views.login),
     path('logout', views.logout),
-    path('chpasswd', views.changePasswd),
+    path('password', views.password),
+    re_path(r'password/(\d{0,})', views.password),
+    path('students', views.students),
+    re_path(r'students/(\d{0,})', views.students),
     path('test', views.test),
-    path('students', views.students)	# Only deans can perform
 ]

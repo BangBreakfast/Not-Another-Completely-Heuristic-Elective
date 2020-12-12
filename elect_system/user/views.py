@@ -6,6 +6,7 @@ import traceback
 import logging
 import django.contrib.auth as auth
 from .models import User, VerificationCode
+from elect_system.settings import ERR_TYPE
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +25,12 @@ def FetchIdAndPasswd(request: HttpRequest):
         reqData = json.loads(request.body.decode())
     except:
         traceback.print_exc()
-        return None, None, 'Json format error'
+        return None, None, ERR_TYPE.JSON_ERR
 
     uid = reqData.get('uid')
     password = reqData.get('password')
     if uid is None or password is None:
-        return None, None, 'Wrong parameters'
+        return None, None, ERR_TYPE.PARAM_ERR
     return uid, password, None
 
 
@@ -37,19 +38,19 @@ def FetchIdAndPasswd(request: HttpRequest):
 @DeprecationWarning
 def register(request: HttpRequest):
     if request.method != 'POST':
-        return JsonResponse({'success': False, 'msg': 'Wrong method'})
+        return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
     uid, password, errMsg = FetchIdAndPasswd(request)
     if errMsg:
         return JsonResponse({'success': False, 'msg': errMsg})
     if User.objects.filter(username=uid).exists():
-        return JsonResponse({'success': False, 'msg': 'uid already exist'})
+        return JsonResponse({'success': False, 'msg': ERR_TYPE.USER_DUP})
 
     try:
         u = User.objects.create_user(username=uid, password=password)
         u.save()
     except:
         traceback.print_exc()
-        return JsonResponse({'success': False, 'msg': 'Unknown error1'})
+        return JsonResponse({'success': False, 'msg': ERR_TYPE.UNKNOWN})
 
     return JsonResponse({'success': True})
 
@@ -57,14 +58,14 @@ def register(request: HttpRequest):
 @csrf_exempt
 def login(request: HttpRequest):
     if request.method != 'POST':
-        return JsonResponse({'success': False, 'msg': 'Wrong method'})
+        return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
     uid, password, errMsg = FetchIdAndPasswd(request)
     if errMsg:
         return JsonResponse({'success': False, 'msg': errMsg})
 
     user = auth.authenticate(username=uid, password=password)
     if user is None:
-        return JsonResponse({'success': False, 'msg': 'Authentication fails'})
+        return JsonResponse({'success': False, 'msg': ERR_TYPE.AUTH_FAIL})
     auth.login(request, user)
     return JsonResponse({'success': True})
 
@@ -79,7 +80,7 @@ def logout(request: HttpRequest):
     else:
         return JsonResponse({
             "success": False,
-            "msg": "Wrong method",
+            "msg": ERR_TYPE.INVALID_METHOD,
         })
 
 
@@ -105,15 +106,14 @@ def test(request: HttpRequest):
 
 
 @csrf_exempt
-def changePasswd(request: HttpRequest):
+def password(request: HttpRequest, uid: str = ''):
     if request.method == 'GET':  # Get verification code to change passwd
-        uid = request.GET.get('uid')
         if uid is None:
-            return JsonResponse({'success': False, 'msg': 'Wrong param'})
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
         if not User.objects.filter(username=uid).exists():
             return JsonResponse({
                 'success': False,
-                'msg': 'uid does not exists'
+                'msg': ERR_TYPE.AUTH_FAIL,
             })
 
         uemail = uid + '@pku.edu.cn'  # uemail means 'user email'
@@ -127,95 +127,163 @@ def changePasswd(request: HttpRequest):
             reqData = json.loads(request.body.decode())
         except:
             traceback.print_exc()
-            return JsonResponse({'success': False, 'msg': 'Json format error'})
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.JSON_ERR})
         passwd = reqData.get('password')
         uid = reqData.get('uid')
         vcode = reqData.get('vcode')
         if uid is None or passwd is None or vcode is None:
-            return JsonResponse({'success': False, 'msg': 'Wrong param'})
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
         uemail = uid + '@pku.edu.cn'
 
         if not VerificationCode.objects.filter(email=uemail).exists():
             return JsonResponse({
                 'success': False,
-                'msg': 'uid does not exists'
+                'msg': ERR_TYPE.AUTH_FAIL,
             })
         v = VerificationCode.objects.get(email=uemail)
         if v.code != str(vcode):
             return JsonResponse({
                 'success': False,
-                'msg': 'Wrong verification code'
+                'msg': ERR_TYPE.AUTH_FAIL,
             })
-
+        VerificationCode.objects.filter(email=uemail).delete()
         u = User.objects.get(username=uid)
         u.set_password(passwd)
         u.save()
         return JsonResponse({'success': True})
     else:
-        return JsonResponse({'success': False, 'msg': 'Wrong method'})
+        return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
 
 
-# In fact, both student accounts and dean accounts could be accessed by this method
+# NOTE: In fact, both student accounts and dean accounts could be accessed by this method
 @csrf_exempt
-def students(request: HttpRequest):
-    if not request.user.is_authenticated or not request.user.is_superuser:
-        return JsonResponse({'success': False, 'msg': 'User not authorized to this operation'})
-    if request.method == 'POST':        # Create students
+def students(request: HttpRequest, uid: str = ''):
+    # Multiple users are created at a time
+    # TODO: For one illegal user info, just skip it and process other users
+    if request.method == 'POST':
+        if not request.user.is_authenticated or not request.user.is_superuser:
+            return JsonResponse({
+                'success': False,
+                'msg': ERR_TYPE.NOT_ALLOWED,
+            })
         try:
             reqData = json.loads(request.body.decode())
         except:
             traceback.print_exc()
-            return JsonResponse({'success': False, 'msg': 'Json format error'})
-
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.JSON_ERR})
         stus = reqData.get('students')
         if not isinstance(stus, list):
-            return JsonResponse({'success': False, 'msg': 'Param type error'})
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
         for stu in stus:
-            stuId = stu.get('stuId')
+            uid = stu.get('uid')
             stuName = stu.get('name')
-            stuIsMale = stu.get('gender')
+            stuGender = stu.get('gender')
             stuDept = stu.get('dept')
             stuGrade = stu.get('grade')
             stuPasswd = stu.get('password')
-            if not isinstance(stuId, str) or \
+            if not isinstance(uid, str) or \
                not isinstance(stuName, str) or \
-               not isinstance(stuIsMale, bool) or \
+               not isinstance(stuGender, bool) or \
                not isinstance(stuDept, int) or \
                not isinstance(stuGrade, int) or \
                not isinstance(stuPasswd, str):
-                return JsonResponse({'success': False, 'msg': 'Param type error'})
-            if stuId is None or stuPasswd is None:
-                return JsonResponse({'success': False, 'msg': 'Wrong param'})
-            if User.objects.filter(username=stuId).exists():    # User already exists
-                return JsonResponse({'success': False, 'msg': 'User already exists'})
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
+            if uid is None or stuPasswd is None:
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
+            if User.objects.filter(username=uid).exists():    # User already exists
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.USER_DUP})
             try:
                 u = User.objects.create_user(
-                    username=stuId, name=stuName, isMale=stuIsMale,
+                    username=uid, name=stuName, gender=stuGender,
                     dept=stuDept, grade=stuGrade, password=stuPasswd,
                 )
                 u.save()
             except:
                 traceback.print_exc()
-                return JsonResponse({'success': False, 'msg': 'Unknown error1'})
-            return JsonResponse({'success': True})
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.UNKNOWN})
+
+        return JsonResponse({'success': True})
+
+    # Retrive user info
+    # Students cannot get user profile of others'
     elif request.method == 'GET':
-        # TODO: search by fields combinations
-        uid = request.GET.get('uid')
-        user = User.objects.get(username=uid)
-        userDict = {
-            'stuId': user.username,
-            'name': user.name,
-            'isMale': user.isMale,
-            'dept': user.dept,
-            'grade': user.grade,
-        }
-        return JsonResponse({'success': True, 'data': userDict})
+        if not request.user.is_authenticated or \
+                ((not request.user.is_superuser) and request.user.username != uid):
+            return JsonResponse({
+                'success': False,
+                'msg': ERR_TYPE.NOT_ALLOWED,
+            })
+        userSet = {}
+        if uid == '':
+            userSet = User.objects.filter()
+        else:
+            userSet = User.objects.filter(username=uid)
+        if not userSet.exists():
+            return JsonResponse({'success': True, 'data': {}})
+        userList = []
+        for idx in range(0, userSet.count()):
+            user = userSet[idx]
+            userDict = {
+                'uid': user.username,
+                'name': user.name,
+                'gender': user.gender,
+                'dept': user.dept,
+                'grade': user.grade,
+            }
+            userList.append(userDict)
+        return JsonResponse({'success': True, 'data': userList})
+
+    # Edit user info
     elif request.method == 'PUT':
-        # TODO: edit student info
-        pass
+        if not request.user.is_authenticated or not request.user.is_superuser:
+            return JsonResponse({
+                'success': False,
+                'msg': ERR_TYPE.NOT_ALLOWED,
+            })
+        if uid is '':
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
+        userSet = User.objects.filter(username=uid)
+        if not userSet.exists():
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.USER_404})
+        user = userSet.get()
+        reqData = {}
+        try:
+            reqData = json.loads(request.body.decode())
+        except:
+            traceback.print_exc()
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.JSON_ERR})
+
+        name = reqData.get('name')
+        dept = reqData.get('dept')
+        gender = reqData.get('gender')
+        grade = reqData.get('grade')
+        creditLimit = reqData.get('credit_limit')
+        passwd = reqData.get('password')
+        if name:
+            user.name = name
+        if dept:
+            user.dept = dept
+        if gender:
+            user.gender = gender
+        if grade:
+            user.grade = grade
+        if creditLimit:
+            user.creditLimit = creditLimit
+        if password:
+            user.set_password(passwd)
+        user.save()
+        return JsonResponse({'success': True})
+
+    # Delete a user
     elif request.method == 'DELETE':
+        if not request.user.is_authenticated or not request.user.is_superuser:
+            return JsonResponse({
+                'success': False,
+                'msg': ERR_TYPE.NOT_ALLOWED,
+            })
         # No check here. It's ok to delete an invalid uid.
-        uid = request.GET.get('uid')
         userSet = User.objects.filter(username=uid)
         userSet.delete()
         return JsonResponse({'success': True})
+    else:
+        return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})

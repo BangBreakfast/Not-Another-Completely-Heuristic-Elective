@@ -31,10 +31,14 @@ class VerificationCode(models.Model):
 
 class User(django.contrib.auth.models.User):
     name = models.CharField(max_length=128)
-    isMale = models.BooleanField(default=True)
-    dept = models.CharField(max_length=128)
-    grade = models.IntegerField()
+    gender = models.BooleanField(default=True)  # male=True, female=False
+    dept = models.IntegerField(default=48)
+    grade = models.IntegerField(default=2017)
     electedCourse = models.CharField(max_length=1024)
+    creditLimit = models.IntegerField(default=25)
+    willingpointLimit = models.IntegerField(default=99)
 
     def __str__(self) -> str:
-        return '<' + self.username + ',' + str(self.isMale) + '>'
+        return '<' + self.username + ',' + str(self.gender) + ',' + \
+            str(self.dept) + ',' + str(self.grade) + str(self.creditLimit) + \
+            str(self.willingpointLimit) + '>'
