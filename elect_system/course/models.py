@@ -20,20 +20,19 @@ class Time(models.Model):
     period = models.IntegerField(default=1)
 
 class Course(models.Model):
-    courseId = models.AutoField(primary_key=True)
+    course_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=128, null=True)
     credit = models.IntegerField(blank=False)
-    mainClass = models.IntegerField(default=1)
-    subClass = models.CharField(max_length=32)
+    main_class = models.IntegerField(default=1)
+    sub_class = models.CharField(max_length=32)
     # time = models.CharField(max_length=256, null=True)
     lecturer = models.CharField(max_length=128)
     pos = models.CharField(max_length=128)
     dept = models.IntegerField(blank=False)
     detail = models.CharField(max_length=1024, null=True)
-    capacity = models.IntegerField(blank=False)
 
     def getCourseObj(crsId: str):
-        crsSet = Course.objects.filter(courseId=crsId)
+        crsSet = Course.objects.filter(course_id=crsId)
         if crsSet.count() != 1:
             logging.error('course set size error: courseId={}, size={}'.format(
                 crsId, crsSet.count()))
