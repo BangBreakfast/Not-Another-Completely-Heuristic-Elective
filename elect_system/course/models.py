@@ -15,15 +15,17 @@ Course 类
 外键:
 
 '''
-
+class Time(models.Model):
+    day = models.IntegerField(default=1)
+    period = models.IntegerField(default=1)
 
 class Course(models.Model):
     courseId = models.AutoField(primary_key=True)
     name = models.CharField(max_length=128, null=True)
     credit = models.IntegerField(blank=False)
-    mainClass = models.IntegerField()
+    mainClass = models.IntegerField(default=1)
     subClass = models.CharField(max_length=32)
-    time = models.CharField(max_length=256, null=True)
+    # time = models.CharField(max_length=256, null=True)
     lecturer = models.CharField(max_length=128)
     pos = models.CharField(max_length=128)
     dept = models.IntegerField(blank=False)
@@ -37,6 +39,14 @@ class Course(models.Model):
                 crsId, crsSet.count()))
             return None
         return crsSet.get()
+
+
+    capacity = models.IntegerField(default=50)
+    elect_num = models.IntegerField(default=0)
+    elect_newround_num = models.IntegerField(default=0)
+    times = models.ManyToManyField(Time)
+
+
 
 
 # '''

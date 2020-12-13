@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 	'user',
-    # 'course',
+    'course',
     'phase',
 ]
 
@@ -84,7 +84,7 @@ DATABASES = {
 		'HOST': '127.0.0.1',
 		'PORT': '3306',
 		'USER': 'root',
-		'PASSWORD': 'xxxxxx', 
+		'PASSWORD': 'xxxxxx',
     }
 }
 
@@ -198,6 +198,7 @@ class ERR_TYPE:
 	ELE_DUP = 'Duplicate election'
 	ELE_404 = 'This election does not exists'
 	ELE_FAIL = 'This election does not support this operation'
+	COURSE_DUP = 'This course already exists'
 	UNKNOWN = "Unknown error"
 
 class ELE_TYPE:
