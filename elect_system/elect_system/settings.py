@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 	'user',
-    # 'course',
+    'course',
     'phase',
 ]
 
@@ -84,7 +84,7 @@ DATABASES = {
 		'HOST': '127.0.0.1',
 		'PORT': '3306',
 		'USER': 'root',
-		'PASSWORD': 'xxxxxx', 
+		'PASSWORD': 'xxxxxx',
     }
 }
 
@@ -195,6 +195,7 @@ class ERR_TYPE:
 	USER_DUP = 'This user already exists'
 	USER_404 = 'This user does not exist'
 	NOT_ALLOWED = 'User is not allowed to perform this operation'
+	COURSE_DUP = 'This course already exists'
 	UNKNOWN = "Unknown error"
 
 class ELE_TYPE:
