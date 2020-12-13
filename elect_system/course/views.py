@@ -38,18 +38,24 @@ def check_time_format(time):
     '''
     return True
 
+@csrf_exempt
+def course(request: HttpRequest):
+    if request.method == 'POST':
+        return addcourse(request)
+    elif request.method == 'GET':
+        return findcourse(request)
+    else:
+        return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
+
 # TODO: Crud of course
 # NOTE: In fact, both student accounts and dean accounts could be accessed by this method
 @csrf_exempt
-def course(request: HttpRequest, uid: str = ''):
+def addcourse(request: HttpRequest):
     # TODO: time PARAM CHECK
 
     if request.method == 'POST':
         if not request.user.is_authenticated or not request.user.is_superuser:
-            return JsonResponse({
-                'success': False,
-                'msg': ERR_TYPE.NOT_ALLOWED,
-            })
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.NOT_ALLOWED, })
 
         try:
             reqDatas = json.loads(request.body.decode())
@@ -218,3 +224,47 @@ def findcourse(request: HttpRequest):
 
     else :
         return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
+@csrf_exempt
+def courseinfo(request: HttpRequest, course_id: 0):
+    if request.method == 'GET':
+        try:
+            print(course_id)
+            course = Course.objects.get(course_id=course_id)
+            def get_time_json(course):
+                times = course.times.all()
+                json = {}
+                for time in times:
+                    day = time.day
+                    period = time.period
+                    if json.get(day):
+                        json[day]["period"].append(period)
+                    else:
+                        json[day] = {
+                            "day": day,
+                            "period": [period]
+                        }
+                return [x for x in json.values()]
+            course_json = {
+                "course_id": course.course_id,
+                "name": course.name,
+                "credit": course.credit,
+                "main_class": course.main_class,
+                "sub_class": course.sub_class,
+                "times": get_time_json(course),
+                "lecturer": course.lecturer,
+                "pos": course.pos,
+                "dept": course.dept,
+                "detail": course.detail,
+                "election": {
+                    "status": 0,
+                    "willpoint": 99,
+                    "elected_num": course.elect_num,
+                    "capacity": course.capacity,
+                    "pending_num": course.elect_newround_num
+                }
+            }
+            return JsonResponse(course_json)
+        except:
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.COURSE_404})
+    else:
+        JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
