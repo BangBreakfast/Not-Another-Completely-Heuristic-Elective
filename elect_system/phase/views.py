@@ -62,6 +62,12 @@ def phases(request: HttpRequest, phid: str = ''):
         return JsonResponse({'success': True, 'data': phList})
 
     elif request.method == 'POST':
+        if not request.user.is_authenticated or not request.user.is_superuser:
+            return JsonResponse({
+                'success': False,
+                'msg': ERR_TYPE.NOT_ALLOWED,
+            })
+
         try:
             reqData = json.loads(request.body.decode())
         except:
@@ -95,7 +101,13 @@ def phases(request: HttpRequest, phid: str = ''):
                 startTime=startDateTime, endTime=endDateTime)
             p.save()
         return JsonResponse({'success': True})
+
     elif request.method == 'DELETE':
+        if not request.user.is_authenticated or not request.user.is_superuser:
+            return JsonResponse({
+                'success': False,
+                'msg': ERR_TYPE.NOT_ALLOWED,
+            })
         phSet = Phase.objects.filter(id=phid)
         phSet.delete()
         return JsonResponse({'success': True})
