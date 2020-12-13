@@ -195,6 +195,9 @@ class ERR_TYPE:
 	USER_DUP = 'This user already exists'
 	USER_404 = 'This user does not exist'
 	NOT_ALLOWED = 'User is not allowed to perform this operation'
+	ELE_DUP = 'Duplicate election'
+	ELE_404 = 'This election does not exists'
+	ELE_FAIL = 'This election does not support this operation'
 	UNKNOWN = "Unknown error"
 
 class ELE_TYPE:

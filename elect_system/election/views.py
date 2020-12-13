@@ -9,7 +9,7 @@ import json
 import traceback
 from django.utils import timezone
 import logging
-from elect_system.settings import ERR_TYPE
+from elect_system.settings import ELE_TYPE, ERR_TYPE
 
 
 @csrf_exempt
@@ -27,7 +27,7 @@ def schedule(request: HttpRequest, uid: str = ''):
     crsList = []
     for el in elList:
         courseId = el.courseId
-        crs = Election.getCourseObj(courseId)
+        crs = Course.getCourseObj(courseId)
         if crs is None:
             continue
         electedNum, pendingNum = Election.getCourseElecionNum(courseId)
@@ -52,7 +52,6 @@ def schedule(request: HttpRequest, uid: str = ''):
 
 
 @csrf_exempt
-# TODO: Not completed
 def elect(request: HttpRequest):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
@@ -61,6 +60,7 @@ def elect(request: HttpRequest):
             'success': False,
             'msg': ERR_TYPE.NOT_ALLOWED,
         })
+
     try:
         reqData = json.loads(request.body.decode())
     except:
@@ -71,18 +71,57 @@ def elect(request: HttpRequest):
     wp = reqData.get('willingpoint')
     elSet = Election.objects.filter(
         stuId=request.user.username, courseId=courseId)
+
     if typeId == 0:
         if elSet.count() != 0:
-            logging.error('exist')
-            return JsonResponse({})
+            logging.error('Duplicate election: stu={}, crs={}, count={}'.format(
+                request.user.username, courseId, elSet.count()))
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_DUP})
+
+        wpCnt = Election.getWpCnt(request.user.username)
+        if wpCnt + wp > request.user.willingpointLimit:
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_FAIL})
+        # TODO: credit check
         el = Election(willingpoint=wp, courseId=courseId,
                       stuId=request.user.username)
         el.save()
+
+    # Edit wp
     elif typeId == 1:
-        elSet = Election.objects.filter(
-            stuId=request.user.username, courseId=courseId)
+        if elSet.count() != 0:
+            logging.error('Duplicate election: stu={}, crs={}, count={}'.format(
+                request.user.username, courseId, elSet.count()))
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_DUP})
         el = elSet.get()
+
+        wpCnt = Election.getWpCnt(request.user.username)
+        if wpCnt - el.willingpoint + wp > request.user.willingpointLimit:
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_FAIL})
         el.willingpoint = wp
         el.save()
+
+    # Quit pending
     elif typeId == 2:
-        pass
+        if elSet.count() != 1:
+            logging.error('This election does not exists: stu={}, crs={}'.format(
+                request.user.username, courseId))
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_404})
+        el = elSet.get()
+        if el.status != ELE_TYPE.PENDING:
+            logging.error('This election does not support this operation: stu={}, crs={}, op={}'.format(
+                request.user.username, courseId, typeId))
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_FAIL})
+        el.delete()
+
+    # Drop
+    elif typeId == 3:
+        if elSet.count() != 1:
+            logging.error('This election does not exists: stu={}, crs={}'.format(
+                request.user.username, courseId))
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_404})
+        el = elSet.get()
+        if el.status != ELE_TYPE.ELECTED:
+            logging.error('This election does not support this operation: stu={}, crs={}, op={}'.format(
+                request.user.username, courseId, typeId))
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_FAIL})
+        el.delete()

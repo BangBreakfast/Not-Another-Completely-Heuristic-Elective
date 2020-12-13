@@ -1,6 +1,7 @@
 from user.models import User
 from django.db import models
 import sys
+import logging
 sys.path.append("..")
 '''
 Course 类
@@ -29,6 +30,14 @@ class Course(models.Model):
     detail = models.CharField(max_length=1024, null=True)
     capacity = models.IntegerField(blank=False)
 
+    def getCourseObj(crsId: str):
+        crsSet = Course.objects.filter(courseId=crsId)
+        if crsSet.count() != 1:
+            logging.error('course set size error: courseId={}, size={}'.format(
+                crsId, crsSet.count()))
+            return None
+        return crsSet.get()
+
 
 # '''
 # Elect 类
@@ -38,7 +47,7 @@ class Course(models.Model):
 #     capacity: 课程容量
 #     elect_num: 已经选上课的人数
 #     elect_newround_num: 下一轮选课的人数
-        
+
 
 # 外键:
 

@@ -5,4 +5,5 @@ from . import views
 
 urlpatterns = [
 	re_path(r'schedule/(\w){0,}', views.schedule),
+	path('elect', views.elect)
 ]
