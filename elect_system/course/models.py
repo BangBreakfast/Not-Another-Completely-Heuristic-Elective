@@ -17,16 +17,17 @@ Course 类
 
 
 class Course(models.Model):
-    course_id = models.AutoField(primary_key=True)
+    courseId = models.AutoField(primary_key=True)
     name = models.CharField(max_length=128, null=True)
     credit = models.IntegerField(blank=False)
-    main_class = models.IntegerField()
-    sub_class = models.CharField(max_length=32)
+    mainClass = models.IntegerField()
+    subClass = models.CharField(max_length=32)
     time = models.CharField(max_length=256, null=True)
     lecturer = models.CharField(max_length=128)
     pos = models.CharField(max_length=128)
     dept = models.IntegerField(blank=False)
     detail = models.CharField(max_length=1024, null=True)
+    capacity = models.IntegerField(blank=False)
 
 
 # '''

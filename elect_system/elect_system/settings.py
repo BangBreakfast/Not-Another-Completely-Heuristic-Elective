@@ -198,6 +198,11 @@ class ERR_TYPE:
 	UNKNOWN = "Unknown error"
 
 class ELE_TYPE:
+	NONE = 0
+	ELECTED = 1
+	PENDING = 2
+
+class OP_TYPE:
 	ELECT = 0
 	EDIT_WP = 1
 	QUIT_PEDING = 2
