@@ -38,6 +38,9 @@ class User(django.contrib.auth.models.User):
     creditLimit = models.IntegerField(default=25)
     willingpointLimit = models.IntegerField(default=99)
 
+    def isLegal(uid: str) -> bool:
+        return User.objects.filter(username=uid)
+
     def __str__(self) -> str:
         return '<' + self.username + ',' + str(self.gender) + ',' + \
             str(self.dept) + ',' + str(self.grade) + str(self.creditLimit) + \

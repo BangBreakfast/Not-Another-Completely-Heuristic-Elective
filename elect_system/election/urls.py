@@ -4,6 +4,7 @@ from django.urls import re_path
 from . import views
 
 urlpatterns = [
-	re_path(r'schedule/(\w){0,}', views.schedule),
+	path('schedule', views.schedule),
+	re_path(r'schedule/(\d{0,})', views.schedule),
 	path('elect', views.elect)
 ]

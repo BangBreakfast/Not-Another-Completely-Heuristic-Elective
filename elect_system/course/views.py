@@ -1,3 +1,4 @@
+from election.models import Election
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse, HttpRequest
 from django.http import response
@@ -29,6 +30,7 @@ def show_all_course(request: HttpRequest):
 
     return JsonResponse({'success': True, 'msg': courseinfo_list, })
 
+
 def check_time_format(time):
     ''' TODO
     [
@@ -38,54 +40,58 @@ def check_time_format(time):
     '''
     return True
 
-@csrf_exempt
-def course(request: HttpRequest):
-    if request.method == 'POST':
-        return addcourse(request)
-    elif request.method == 'GET':
-        return findcourse(request)
-    else:
-        return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
 
-# TODO: Crud of course
-# NOTE: In fact, both student accounts and dean accounts could be accessed by this method
-@csrf_exempt
-def addcourse(request: HttpRequest):
-    # TODO: time PARAM CHECK
+def get_time_json(course: Course):
+    times = course.times.all()
+    json = {}
+    for time in times:
+        day = time.day
+        period = time.period
+        if json.get(day):
+            json[day]["period"].append(period)
+        else:
+            json[day] = {
+                "day": day,
+                "period": [period]
+            }
+    return [x for x in json.values()]
 
+
+def check_time(course, day, period):
+    times = course.times.all()
+    for time in times:
+        if time.day == day and (time.period in period):
+            return True
+    return False
+
+
+@csrf_exempt
+def course(request: HttpRequest, crsIdInURL: str = ''):
     if request.method == 'POST':
-        if not request.user.is_authenticated or not request.user.is_superuser:
-            return JsonResponse({'success': False, 'msg': ERR_TYPE.NOT_ALLOWED, })
+        if not request.user.is_superuser:
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.NOT_ALLOWED})
 
         try:
-            reqDatas = json.loads(request.body.decode())
+            reqData = json.loads(request.body.decode())
         except:
             traceback.print_exc()
             return JsonResponse({'success': False, 'msg': ERR_TYPE.JSON_ERR})
-        for reqData in reqDatas.values():
+        crss = reqData.get('courses')
+        if crss is None or type(crss) is not list:
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
 
-            course_id = reqData.get('course_id')
-            name = reqData.get('name')
-            credit = reqData.get('credit')
-            lecturer = reqData.get('lecturer')
-            pos = reqData.get('pos')
-            dept = reqData.get('dept')
-            detail = reqData.get('detail')
-            main_class = reqData.get('main_class')
-            sub_class = reqData.get('sub_class')
-            times = reqData.get('times')
-            election = reqData.get('election')
-            print('start check format ...')
-            ''' 
-            print(isinstance(name, str))
-            print(isinstance(credit, int))
-            print(isinstance(lecturer, str))
-            print(isinstance(pos, str))
-            print(isinstance(dept, int))
-            print(isinstance(times, list))
-            print(isinstance(election, dict))
-            print(election)
-            '''
+        for crs in crss:
+            course_id = crs.get('course_id')
+            name = crs.get('name')
+            credit = crs.get('credit')
+            lecturer = crs.get('lecturer')
+            pos = crs.get('pos')
+            dept = crs.get('dept')
+            detail = crs.get('detail')
+            main_class = crs.get('main_class')
+            sub_class = crs.get('sub_class')
+            times = crs.get('times')
+            capacity = crs.get('capacity')
 
             if not isinstance(course_id, int) or \
                     not isinstance(name, str) or \
@@ -97,42 +103,24 @@ def addcourse(request: HttpRequest):
                     not isinstance(times, list) or \
                     not isinstance(main_class, int) or \
                     not isinstance(sub_class, str) or \
-                    not isinstance(election, dict):
+                    not isinstance(capacity, int):
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
-            print('first check pass')
+            # TODO: time PARAM CHECK
 
-            elected_num = election.get('elected_num')
-            capacity = election.get('capacity')
-            pending_num = election.get('pending_num')
-            if not isinstance(elected_num, int) or \
-                    not isinstance(capacity, int) or \
-                    not isinstance(pending_num, int) or \
-                    not check_time_format(times):
-                return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
-            #TODO: time PARAM CHECK
-
-            if Course.objects.filter(course_id=course_id).exists():  # course already exists
+            # course already exists
+            if Course.objects.filter(course_id=course_id).exists():
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.COURSE_DUP})
 
-
-            c = Course.objects.create(course_id=course_id,
-                                          name=name,
-                                          credit=credit,
-                                          lecturer=lecturer,
-                                          pos=pos,
-                                          dept=dept,
-                                          main_class=main_class,
-                                          sub_class=sub_class,
-                                          detail=detail,
-                                          elect_num=elected_num,
-                                          capacity=capacity,
-                                          elect_newround_num=pending_num)
+            c = Course.objects.create(course_id=course_id, name=name, credit=credit,
+                                      lecturer=lecturer, pos=pos, dept=dept,
+                                      main_class=main_class, sub_class=sub_class,
+                                      detail=detail, capacity=capacity)
 
             for tim in times:
                 day = tim.get('day')
                 period = tim.get('period')
                 if not isinstance(day, int) or \
-                        not isinstance(period, list) :
+                        not isinstance(period, list):
                     return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
                 for per in period:
                     try:
@@ -149,55 +137,37 @@ def addcourse(request: HttpRequest):
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.UNKNOWN})
 
             return JsonResponse({'success': True})
-    else :
-        return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
 
-@csrf_exempt
-def findcourse(request: HttpRequest):
-    if request.method == 'GET':
-        if not request.user.is_authenticated:
-           return JsonResponse({'success': False, 'msg': ERR_TYPE.AUTH_FAIL, })
-
-        id = request.GET.get('id', default=False)
-        period = request.GET.get('period', default=False)
-        day = request.GET.get('day', default=False)
-        name = request.GET.get('name', default=False)
-        main_class = request.GET.get('main_class', default=False)
-        sub_class = request.GET.get('sub_class', default=False)
+    elif request.method == 'GET':
+        # For queries of args not carried in URL, empty string will be returned
+        crsId = request.GET.get('id')
+        period = request.GET.get('period')
+        day = request.GET.get('day')
+        name = request.GET.get('name')
+        main_class = request.GET.get('main_class')
+        sub_class = request.GET.get('sub_class')
+        if crsIdInURL != '':
+            crsId = crsIdInURL
 
         course_list = Course.objects.all()
-        if id: course_list = [x for x in course_list if x.course_id == int(id)]
-        if name: course_list = [x for x in course_list if x.name == name]
-        if main_class: course_list = [x for x in course_list if x.main_class == int(main_class)]
-        if sub_class: course_list = [x for x in course_list if x.sub_class == sub_class]
+        if crsId:
+            course_list = course_list.filter(course_id=crsId)
+        if name:
+            course_list = course_list.filter(name=name)
+        if main_class:
+            course_list = course_list.filter(main_class=main_class)
+        if sub_class:
+            course_list = course_list.filter(sub_class=sub_class)
         if day and period:
             day = int(day)
             period = [int(x) for x in period.split(',')]
-            def check_time(course, day, period):
-                times = course.times.all()
-                for time in times:
-                    if time.day == day and (time.period in period):
-                        return True
-                return False
-            course_list = [x for x in course_list if check_time(x, day, period)]
+            course_list = [
+                x for x in course_list if check_time(x, day, period)]
 
         course_json_list = []
         for course in course_list:
-            def get_time_json(course):
-                times = course.times.all()
-                json = {}
-                for time in times:
-                    day = time.day
-                    period = time.period
-                    if json.get(day):
-                        json[day]["period"].append(period)
-                    else:
-                        json[day] = {
-                            "day": day,
-                            "period": [period]
-                        }
-                return [x for x in json.values()]
-
+            elected, pending = Election.getCourseElecionNum(course.course_id)
+            st, wp = Election.getStuElectionNum(request.user.username, crsId)
             course_json = {
                 "course_id": course.course_id,
                 "name": course.name,
@@ -210,26 +180,33 @@ def findcourse(request: HttpRequest):
                 "dept": course.dept,
                 "detail": course.detail,
                 "election": {
-                    "status": 0,
-                    "willpoint": 99,
-                    "elected_num": course.elect_num,
+                    "status": st,
+                    "willpoint": wp,
+                    "elected_num": elected,
                     "capacity": course.capacity,
-                    "pending_num": course.elect_newround_num
+                    "pending_num": pending
                 }
             }
             course_json_list.append(course_json)
-
-
         return JsonResponse({'success': True, 'course_list': course_json_list})
 
-    else :
+    elif request.method == 'DELETE':
+        if not request.user.is_superuser:
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.NOT_ALLOWED})
+        crsSet = Course.objects.filter(course_id=crsIdInURL)
+        crsSet.delete()
+        return JsonResponse({'success': True})
+
+    else:
         return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
+
+
 @csrf_exempt
-def courseinfo(request: HttpRequest, course_id: 0):
+def courseinfo(request: HttpRequest, course_id: str = ''):
     if request.method == 'GET':
         try:
-            print(course_id)
             course = Course.objects.get(course_id=course_id)
+
             def get_time_json(course):
                 times = course.times.all()
                 json = {}
