@@ -14,13 +14,15 @@ Course 类
 外键:
 
 '''
-
+class Time(models.Model):
+    day = models.IntegerField(default=1)
+    period = models.IntegerField(default=1)
 
 class Course(models.Model):
     course_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=128, null=True)
     credit = models.IntegerField(blank=False)
-    main_class = models.IntegerField(default=0)
+    main_class = models.IntegerField(default=1)
     sub_class = models.CharField(max_length=32)
     # time = models.CharField(max_length=256, null=True)
     lecturer = models.CharField(max_length=128)
@@ -32,12 +34,9 @@ class Course(models.Model):
     capacity = models.IntegerField(default=50)
     elect_num = models.IntegerField(default=0)
     elect_newround_num = models.IntegerField(default=0)
-    # times = models.ManyToManyField(Time)
+    times = models.ManyToManyField(Time)
 
-class Time(models.Model):
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)
-    day = models.IntegerField(default=1)
-    period = models.IntegerField(default=1)
+
 
 
 # '''

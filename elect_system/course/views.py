@@ -65,7 +65,8 @@ def course(request: HttpRequest, uid: str = ''):
             pos = reqData.get('pos')
             dept = reqData.get('dept')
             detail = reqData.get('detail')
-
+            main_class = reqData.get('main_class')
+            sub_class = reqData.get('sub_class')
             times = reqData.get('times')
             election = reqData.get('election')
             print('start check format ...')
@@ -88,6 +89,8 @@ def course(request: HttpRequest, uid: str = ''):
                     not isinstance(dept, int) or \
                     not isinstance(detail, str) or \
                     not isinstance(times, list) or \
+                    not isinstance(main_class, int) or \
+                    not isinstance(sub_class, str) or \
                     not isinstance(election, dict):
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
             print('first check pass')
@@ -105,21 +108,20 @@ def course(request: HttpRequest, uid: str = ''):
             if Course.objects.filter(course_id=course_id).exists():  # course already exists
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.COURSE_DUP})
 
-            try:
-                c = Course.objects.create(course_id=course_id,
+
+            c = Course.objects.create(course_id=course_id,
                                           name=name,
                                           credit=credit,
                                           lecturer=lecturer,
                                           pos=pos,
                                           dept=dept,
+                                          main_class=main_class,
+                                          sub_class=sub_class,
                                           detail=detail,
                                           elect_num=elected_num,
                                           capacity=capacity,
                                           elect_newround_num=pending_num)
-                c.save()
-            except:
-                traceback.print_exc()
-                return JsonResponse({'success': False, 'msg': ERR_TYPE.UNKNOWN})
+
             for tim in times:
                 day = tim.get('day')
                 period = tim.get('period')
@@ -130,10 +132,89 @@ def course(request: HttpRequest, uid: str = ''):
                     try:
                         t = Time.objects.create(course=c, day=day, period=per)
                         t.save()
+                        c.times.add(t)
                     except:
                         traceback.print_exc()
                         return JsonResponse({'success': False, 'msg': ERR_TYPE.UNKNOWN})
+            try:
+                c.save()
+            except:
+                traceback.print_exc()
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.UNKNOWN})
 
             return JsonResponse({'success': True})
+    else :
+        return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
+
+@csrf_exempt
+def findcourse(request: HttpRequest):
+    if request.method == 'GET':
+        if not request.user.is_authenticated:
+           return JsonResponse({'success': False, 'msg': ERR_TYPE.AUTH_FAIL, })
+
+        id = request.GET.get('id', default=False)
+        period = request.GET.get('period', default=False)
+        day = request.GET.get('day', default=False)
+        name = request.GET.get('name', default=False)
+        main_class = request.GET.get('main_class', default=False)
+        sub_class = request.GET.get('sub_class', default=False)
+
+        course_list = Course.objects.all()
+        if id: course_list = [x for x in course_list if x.course_id == int(id)]
+        if name: course_list = [x for x in course_list if x.name == name]
+        if main_class: course_list = [x for x in course_list if x.main_class == int(main_class)]
+        if sub_class: course_list = [x for x in course_list if x.sub_class == sub_class]
+        if day and period:
+            day = int(day)
+            period = [int(x) for x in period.split(',')]
+            def check_time(course, day, period):
+                times = course.times.all()
+                for time in times:
+                    if time.day == day and (time.period in period):
+                        return True
+                return False
+            course_list = [x for x in course_list if check_time(x, day, period)]
+
+        course_json_list = []
+        for course in course_list:
+            def get_time_json(course):
+                times = course.times.all()
+                json = {}
+                for time in times:
+                    day = time.day
+                    period = time.period
+                    if json.get(day):
+                        json[day]["period"].append(period)
+                    else:
+                        json[day] = {
+                            "day": day,
+                            "period": [period]
+                        }
+                return [x for x in json.values()]
+
+            course_json = {
+                "course_id": course.course_id,
+                "name": course.name,
+                "credit": course.credit,
+                "main_class": course.main_class,
+                "sub_class": course.sub_class,
+                "times": get_time_json(course),
+                "lecturer": course.lecturer,
+                "pos": course.pos,
+                "dept": course.dept,
+                "detail": course.detail,
+                "election": {
+                    "status": 0,
+                    "willpoint": 99,
+                    "elected_num": course.elect_num,
+                    "capacity": course.capacity,
+                    "pending_num": course.elect_newround_num
+                }
+            }
+            course_json_list.append(course_json)
+
+
+        return JsonResponse({'success': True, 'course_list': course_json_list})
+
     else :
         return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
