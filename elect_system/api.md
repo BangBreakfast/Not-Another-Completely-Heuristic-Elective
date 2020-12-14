@@ -2,7 +2,7 @@
 
 ## JSON
 
-### 登录
+### stu, dean 登录
 
 - Method: POST
 - Paths: /stu/login, /dean/login
@@ -45,12 +45,13 @@ request.body = {
 }
 ```
 
-### 退出
+### stu, dean 退出
 
 - Method: POST
 - Paths: /stu/logout, /dean/logout
 - Request body: (empty)
 - Response body:
+
 ```json
 // ok
 {
@@ -63,44 +64,29 @@ request.body = {
 	"msg": "Wrong method"
 }
 ```
-### 获取时间信息
-- Method: Get
-- Paths: time/timetable.json
-- Request body: (empty)
-- Response body:
-```json 
-[
-    // 具体的时间
-    {
-    "date":string, 
-    // 时间的内容：选课节点等
-    "detail":string,
-    // 备注信息：开放跨院系选课等
-    "info":string
-    },
-    {
-    "date":string, 
-    // 时间的内容：选课节点等
-    "detail":string,
-    // 备注信息：开放跨院系选课等
-    "info":string
-    },
-    ...
-]
-```
-### 获取课表信息
-- Method: Post
-- Paths: /stu/PersonalCourse
-- Request body: (stuID)
-- Response body:
+### stu 修改密码
+
+#### Get Verification Code
+
+- Method: __GET__
+- Path: /stu/chpasswd?stuId=1600013239
+- Request body: null
+
+#### Send Verification Code
+
+- Method: __POST__
+- Path: /stu/chpasswd
+- Request body:
+
 ```json
 {
-    // 三组数据按照，都是[7][13]的数组，里面都是string
-    "courses":[[1,1,1,...],...],
-    "detail":[[1,1,1,...],...],
-    "willpoint":[[1,1,1,...],...],
+	"stuId": "1600013239",
+	"password": "123456",	// new password
+	"vcode": "1234"
 }
 ```
+
+
 ### Response Body Fudanmental
 ``` json
 // 通用：

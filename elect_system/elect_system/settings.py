@@ -11,10 +11,11 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+from enum import Enum
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
@@ -25,7 +26,7 @@ SECRET_KEY = 'd@a(qr#9g9u_g40gt*nn=g#yh6!ibkcq$1_ow-bt87sy0=s#8#'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -37,8 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-	'dean',
-	'stu',
+	'user',
+    'course',
+    'phase',
+	'election'
 ]
 
 MIDDLEWARE = [
@@ -70,7 +73,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'elect_system.wsgi.application'
-
+APPEND_SLASH=False 
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
@@ -78,11 +81,11 @@ WSGI_APPLICATION = 'elect_system.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-		'NAME': 'electiveSystem',
+		'NAME': 'elective',
 		'HOST': '127.0.0.1',
 		'PORT': '3306',
 		'USER': 'root',
-		'PASSWORD': 'jiangyan',
+		'PASSWORD': 'xxxxxx',
     }
 }
 
@@ -111,7 +114,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
@@ -124,3 +127,96 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+BASE_LOG_DIR = os.path.join(BASE_DIR, "log")
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {  # Detailed logs printed into log file
+            'format': '%(asctime)s [%(levelname)s] [%(threadName)s] [task_id:%(name)s] [%(filename)s:%(lineno)d]'
+                      ' %(message)s'
+        },
+        'simple': {		# Simple logs printed on console
+            'format': '%(asctime)s [%(levelname)s] [%(filename)s:%(lineno)d] %(message)s'
+        },
+    },
+
+    'filters': {
+        'require_debug_true': {  # print logs only if debug=True
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+
+    'handlers': {
+        'console': {			# Simple logs printed on console
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'default': {
+            'level': 'INFO',  # Do not put DEBUG logs in file
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_LOG_DIR, "info.log"),
+            'maxBytes': 1024 * 1024 * 50,  # 50MB
+            'backupCount': 3,
+            'formatter': 'standard',
+            'encoding': 'utf-8',
+        },
+    },
+
+    'loggers': {
+        '': {
+            'handlers': ['default', 'console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.163.com'
+EMAIL_PORT = 25
+EMAIL_USE_TLS = False
+EMAIL_HOST_USER = 'pku_elective@163.com'
+EMAIL_HOST_PASSWORD = 'xxxxxx'
+
+DEFAULT_CHARSET = 'utf-8'
+
+
+class ERR_TYPE:
+	INVALID_METHOD = 'Invalid method'
+	JSON_ERR = 'Json format error'
+	PARAM_ERR = 'Wrong parameters'
+	AUTH_FAIL = 'Authentication failed'
+	USER_DUP = 'This user already exists'
+	USER_404 = 'This user does not exist'
+	NOT_ALLOWED = 'User is not allowed to perform this operation'
+	ELE_DUP = 'Duplicate election'
+	ELE_404 = 'This election does not exists'
+	ELE_FAIL = 'Election fails'
+	COURSE_DUP = 'This course already exists'
+	COURSE_404 = 'This course does not exists'
+	WP_ERR = 'Invalid willing point'
+	TIME_CONF = 'Course time conflict'
+	UNKNOWN = "Unknown error"
+
+class ELE_TYPE:
+	NONE = 0
+	ELECTED = 1
+	PENDING = 2
+
+class OP_TYPE:
+	ELECT = 0
+	EDIT_WP = 1
+	QUIT_PEDING = 2
+	DROP = 3
+
+class COURSE_TYPE:
+	MAJOR = 0
+	POLITICS = 3
+	GYM = 4
+	ENGLISH = 5
+	GENERAL = 6
