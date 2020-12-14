@@ -167,7 +167,10 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
         course_json_list = []
         for course in course_list:
             elected, pending = Election.getCourseElecionNum(course.course_id)
-            st, wp = Election.getStuElectionNum(request.user.username, crsId)
+            st, wp = 0, 0
+            if request.user.is_authenticated:
+                st, wp = Election.getStuElectionNum(
+                    request.user.username, crsId)
             course_json = {
                 "course_id": course.course_id,
                 "name": course.name,

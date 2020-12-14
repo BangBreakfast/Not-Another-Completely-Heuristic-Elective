@@ -45,7 +45,7 @@ class Election(models.Model):
     # Should check if this courseId is legal
     def getCourseElecionNum(crsId: str):
         crSet = Election.objects.filter(courseId=crsId)
-        if Course.objects.filter(course_id=crsId):
+        if not Course.objects.filter(course_id=crsId).exists():
             logging.error(
                 'courseId={} does not exist in Course list'.format(crsId))
             return 0, 0

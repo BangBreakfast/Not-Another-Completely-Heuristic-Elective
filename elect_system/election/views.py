@@ -40,7 +40,7 @@ def schedule(request: HttpRequest, uid: str = ''):
                 "credit": crs.credit,
                 "main_class": crs.main_class,
                 "sub_class": crs.sub_class,
-				"times": get_time_json(crs.time),
+                "times": get_time_json(crs.times),
                 "lecturer": crs.lecturer,
                 "pos": crs.pos,
                 "dept": crs.dept,
@@ -58,15 +58,29 @@ def schedule(request: HttpRequest, uid: str = ''):
     else:
         return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
 
-# TODO
-def checkTime(stuId:str, crsId:str)->bool:
+
+def checkTime(stuId: str, crsId: str) -> bool:
     crs = Course.getCourseObj(crsId)
-    epList = Election.getCourseOfStudent(stuId)
+
     times = crs.times.all()
+    tt = [[0 for i in range(10)] for j in range(8)]
     for time in times:
-        day = time.day
-        period = time.period
+        d = time.day
+        p = time.period
+        tt[d][p] = 1
+
+    # All courses that are elected or pending
+    epList = Election.getCourseOfStudent(stuId)
+    for ce in epList:
+        crsId_ = ce.courseId
+        c = Course.getCourseObj(crsId_)
+        for time in c.times.all():
+            d = time.day
+            p = time.period
+            if tt[d][p]:
+                return False
     return True
+
 
 @csrf_exempt
 def elect(request: HttpRequest):
@@ -89,7 +103,7 @@ def elect(request: HttpRequest):
     if wp is None:
         wp = 0
     elif wp < 0:
-        return JsonResponse({'success':False, 'msg':ERR_TYPE.WP_ERR})
+        return JsonResponse({'success': False, 'msg': ERR_TYPE.WP_ERR})
     elSet = Election.objects.filter(
         stuId=request.user.username, courseId=courseId)
 
@@ -100,7 +114,7 @@ def elect(request: HttpRequest):
             return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_DUP})
         if not Course.isLegal(courseId):
             return JsonResponse({'success': False, 'msg': ERR_TYPE.COURSE_404})
-            
+
         wpCnt = Election.getWpCnt(request.user.username)
         if wpCnt + wp > 99:
             return JsonResponse({'success': False, 'msg': ERR_TYPE.WP_ERR})
