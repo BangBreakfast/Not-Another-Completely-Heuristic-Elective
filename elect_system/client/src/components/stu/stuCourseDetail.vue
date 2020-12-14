@@ -41,10 +41,10 @@
 
 <style>
   table {
-      width: 80%;
-      border: solid 1px;
-      margin: 0px auto;
-      box-align: center;
+    width: 80%;
+    border: solid 1px;
+    margin: 0px auto;
+    box-align: center;
   }
   .el-row {
     margin-bottom: 40px;
