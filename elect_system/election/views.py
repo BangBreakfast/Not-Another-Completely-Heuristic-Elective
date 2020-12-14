@@ -12,7 +12,7 @@ import traceback
 from django.utils import timezone
 import logging
 from elect_system.settings import ELE_TYPE, ERR_TYPE
-
+import random
 
 @csrf_exempt
 def schedule(request: HttpRequest, uid: str = ''):
@@ -175,3 +175,49 @@ def elect(request: HttpRequest):
 
     else:
         return JsonResponse({"success": False, 'msg': ERR_TYPE.PARAM_ERR})
+
+def random_select(wpList, num):
+    base_wp = 10
+    wpList = [x + base_wp for x in wpList]
+    for o in range(num):
+        k = random.randint(1, sum(wpList))
+        s = 0
+        for i, x in enumerate(wpList):
+            if s < k and s + x >= k:
+                wpList[i] = 0
+                break
+            s += x
+    return [i for i, x in enumerate(wpList) if x == 0]
+
+@csrf_exempt
+def random_elect(request: HttpRequest):
+    '''
+    TODO support this api
+    '''
+    crsList = Course.objects.all()
+    for crs in crsList:
+        elList = Election.objects.filter(courseId=crs.course_id)
+        capacity = crs.elect_num
+        elect_num = elList.filter(status=ELE_TYPE.ELECTED)
+        pending_num = elList.filter(status=ELE_TYPE.PENDING)
+        if elect_num + pending_num <= capacity:
+            for el in elList:
+                if el.status == ELE_TYPE.PENDING:
+                    el.status = ELE_TYPE.ELECTED
+                    el.save()
+        else:
+            elList = elList.filter(status=ELE_TYPE.PENDING)
+            wpList = [el.willingpoint for el in elList]
+            elected_stu = random_select(wpList, capacity - elect_num)
+            index = 0
+            for i, el in enumerate(elList):
+                if index >= len(elected_stu):
+                    el.delete()
+                elif i == elected_stu[index]:
+                    el.status = ELE_TYPE.ELECTED
+                    el.save()
+                    index += 1
+                else:
+                    el.delete()
+
+    return JsonResponse({'success': True})
