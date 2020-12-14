@@ -1,43 +1,51 @@
 <template>
     <div>
-        <el-row :span="24"><h1>{{this.course.name}}</h1></el-row>
-        <el-row>
-            <el-col :span="12">课程编号</el-col><el-col :span="12">{{this.course.course_id}}</el-col>
-        </el-row>
-        <el-row>
-            <el-col :span="12">课程类别</el-col>
-            <el-col :span="12">
-                {{Mainclass[course.main_class-1]}}
-            </el-col>
-        </el-row>
-        <el-row>
-            <el-col :span="12">课程学分</el-col><el-col :span="12">{{this.course.credit}}</el-col>
-        </el-row>
-        <el-row>
-            <el-col :span="12">开课院系</el-col><el-col :span="12">信科</el-col>
-        </el-row>
-        <el-row>
-            <el-col :span="12">任课老师</el-col><el-col :span="12">{{this.course.lecturer}}</el-col>
-        </el-row>
-        <el-row>
-            <el-col :span="12">上课地点</el-col><el-col :span="12">{{this.course.pos}}</el-col>
-        </el-row>
-        <el-row>
-            <el-col :span="12">上课时间</el-col>
-            <el-col :span="6" v-for ="(time,timeIndex) in this.course.times" :key="timeIndex">
-                {{date[time.day-1]}}
-                <div v-for ="(lesson,lessonIndex) in time.period" :key="lessonIndex">
-                {{lessons[lesson-1]}}
-                </div>
-            </el-col>
-        </el-row>
-        <el-row>
-            <el-col :span="12">详细描述</el-col><el-col :span="12">{{this.course.detail}}</el-col>
-        </el-row>
+        <table>
+            <el-row :span="24"><h1>{{this.course.name}}</h1></el-row>
+            <el-row>
+                <el-col :span="12">课程编号</el-col><el-col :span="12">{{this.course.course_id}}</el-col>
+            </el-row>
+            <el-row>
+                <el-col :span="12">课程类别</el-col>
+                <el-col :span="12">
+                    {{Mainclass[course.main_class-1]}}
+                </el-col>
+            </el-row>
+            <el-row>
+                <el-col :span="12">课程学分</el-col><el-col :span="12">{{this.course.credit}}</el-col>
+            </el-row>
+            <el-row>
+                <el-col :span="12">开课院系</el-col><el-col :span="12">信科</el-col>
+            </el-row>
+            <el-row>
+                <el-col :span="12">任课老师</el-col><el-col :span="12">{{this.course.lecturer}}</el-col>
+            </el-row>
+            <el-row>
+                <el-col :span="12">上课地点</el-col><el-col :span="12">{{this.course.pos}}</el-col>
+            </el-row>
+            <el-row>
+                <el-col :span="12">上课时间</el-col>
+                <el-col :span="6" v-for ="(time,timeIndex) in this.course.times" :key="timeIndex">
+                    {{date[time.day-1]}}
+                    <div v-for ="(lesson,lessonIndex) in time.period" :key="lessonIndex">
+                    {{lessons[lesson-1]}}
+                    </div>
+                </el-col>
+            </el-row>
+            <el-row>
+                <el-col :span="12">详细描述</el-col><el-col :span="12">{{this.course.detail}}</el-col>
+            </el-row>
+        </table>
     </div>
 </template>
 
 <style>
+  table {
+      width: 80%;
+      border: solid 1px;
+      margin: 0px auto;
+      box-align: center;
+  }
   .el-row {
     margin-bottom: 40px;
   }
