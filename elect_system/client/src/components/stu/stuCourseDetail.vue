@@ -24,7 +24,7 @@
                 <el-col :span="12">上课地点</el-col><el-col :span="12">{{this.course.pos}}</el-col>
             </el-row>
             <el-row>
-                <el-col :span="12">上课时间</el-col>
+                <el-col :span="12"><br>上课时间</el-col>
                 <el-col :span="6" v-for ="(time,timeIndex) in this.course.times" :key="timeIndex">
                     {{date[time.day-1]}}
                     <div v-for ="(lesson,lessonIndex) in time.period" :key="lessonIndex">
@@ -42,15 +42,15 @@
 <style>
   table {
     width: 80%;
-    border: solid 1px;
     margin: 0px auto;
     box-align: center;
+    background-color: azure;
   }
   .el-row {
     margin-bottom: 40px;
   }
   .el-col {
-    border-radius: 4px;
+    box-align: center;
   }
 </style>
 
