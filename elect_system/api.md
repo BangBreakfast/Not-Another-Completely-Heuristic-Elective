@@ -64,7 +64,6 @@ request.body = {
 	"msg": "Wrong method"
 }
 ```
-
 ### stu 修改密码
 
 #### Get Verification Code
@@ -86,6 +85,7 @@ request.body = {
 	"vcode": "1234"
 }
 ```
+
 
 ### Response Body Fudanmental
 ``` json

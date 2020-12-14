@@ -41,6 +41,7 @@ INSTALLED_APPS = [
 	'user',
     'course',
     'phase',
+	'election'
 ]
 
 MIDDLEWARE = [
@@ -182,10 +183,8 @@ EMAIL_USE_TLS = False
 EMAIL_HOST_USER = 'pku_elective@163.com'
 EMAIL_HOST_PASSWORD = 'xxxxxx'
 
-ERR_MSG = [
-	'JSON_FORMAT_ERROR',
-	''
-]
+DEFAULT_CHARSET = 'utf-8'
+
 
 class ERR_TYPE:
 	INVALID_METHOD = 'Invalid method'
@@ -197,8 +196,11 @@ class ERR_TYPE:
 	NOT_ALLOWED = 'User is not allowed to perform this operation'
 	ELE_DUP = 'Duplicate election'
 	ELE_404 = 'This election does not exists'
-	ELE_FAIL = 'This election does not support this operation'
+	ELE_FAIL = 'Election fails'
 	COURSE_DUP = 'This course already exists'
+	COURSE_404 = 'This course does not exists'
+	WP_ERR = 'Invalid willing point'
+	TIME_CONF = 'Course time conflict'
 	UNKNOWN = "Unknown error"
 
 class ELE_TYPE:

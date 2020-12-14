@@ -10,6 +10,7 @@
         <el-input type="password" placeholder="请输入密码" v-model="form.password"/>
       </el-form-item>
       <el-form-item>
+        <el-button v-on:click="link()">切换到教务系统</el-button>
         <el-button type="primary" v-on:click="stuLogin()">登录</el-button>
       </el-form-item>
     </el-form>
@@ -62,22 +63,22 @@ export default {
         /* 接口请求 */
         axios.post('http://localhost:8000/stu/Login', this.form, {withCredentials: true}).then((res) => {
           console.log(res)
-          if (res.code === 404) {
-            this.tishi = '该用户不存在'
+          if (res.success === false) {
+            this.tishi = '该用户不存在或者密码错误'
             this.showTishi = true
-          } else if (res.data === -200) {
-            this.tishi = '密码输入错误'
-            this.showTishi = true
-          } else if (res.data === 200) {
+          } else if (res.success === true) {
             this.tishi = '登录成功'
             this.showTishi = true
-            setCookie('username', 'stu' + this.username, 1000 * 60)
+            setCookie('username', 'user' + this.username, 1000 * 60)
             setTimeout(function () {
-              this.$router.push('/stuMain')
+              this.$router.push('/adminMain')
             }.bind(this), 1000)
           }
         })
       }
+    },
+    link () {
+      this.$router.push('/adminLogin')
     }
   }
 }

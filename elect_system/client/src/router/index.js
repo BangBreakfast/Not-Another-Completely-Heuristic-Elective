@@ -6,6 +6,7 @@ import stuLogin from '@/components/stu/stuLogin'
 import stuProgram from '@/components/stu/stuProgram'
 import stuPersonal from '@/components/stu/stuPersonal'
 import stuCourseSearch from '@/components/stu/stuCourseSearch'
+import stuCourseDetail from '@/components/stu/stuCourseDetail'
 import stuMain from '@/components/stu/stuMain'
 import adminCore from '@/components/admin/adminCore'
 import adminLogin from '@/components/admin/adminLogin'
@@ -49,6 +50,11 @@ export default new Router({
           path: '/stuCourseSearch',
           name: 'stuCourseSearch',
           component: stuCourseSearch
+        },
+        {
+          path: '/stuCourseDetail/:id',
+          name: 'stuCourseDetail',
+          component: stuCourseDetail
         },
         {
           path: '/stuMain',
