@@ -50,7 +50,7 @@
 import axios from 'axios'
 export default {
   mounted () {
-    axios.get('http://localhost:8000/courses/'+this.$route.params.id, {}).then(response => (this.course = response.course))
+    axios.get('http://localhost:8000/course/courses/' + this.$route.params.id + '/detail', {withCredentials: true}).then(response => (this.course = response.data.course_list[0]))
   },
   data () {
     return {

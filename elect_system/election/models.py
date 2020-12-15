@@ -14,10 +14,10 @@ class Election(models.Model):
     status = models.IntegerField(default=0)
 
     def getCourseOfStudent(stuId: str) -> list:
-        if not User.objects.filter(username=stuId).exists():
-            logging.error(
-                'stuId={} does not exist in Course list'.format(stuId))
-            return 0, 0
+        # if not User.objects.filter(username=stuId).exists():
+        #     logging.error(
+        #         'stuId={} does not exist in Course list'.format(stuId))
+        #     return 0, 0
         crSet = Election.objects.filter(stuId=stuId)
         return list(crSet.all())
 
@@ -54,6 +54,7 @@ class Election(models.Model):
         return elected, pending
 
     def getStuElectionNum(stuId:str, crsId:str):
+        print(stuId,',',crsId,'***')
         elSet = Election.objects.filter(stuId=stuId, courseId=crsId)
         if elSet.count() == 1:
             return elSet.get().status, elSet.get().willingpoint

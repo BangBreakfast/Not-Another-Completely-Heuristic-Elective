@@ -2,7 +2,7 @@
     <div class="class-table">
 
         <el-row>
-            您剩余的意愿点:{{willpoint()}}
+            您剩余的意愿点:{{will}}
         </el-row>
         <el-divider></el-divider>
         <div class="table-wrapper">
@@ -18,13 +18,14 @@
                     <tbody>
                         <tr v-for="(lesson, lessonIndex) in classTableData.lessons" :key="lessonIndex">
                             <td>
-                                <p>{{'第' + digital2Chinese(lessonIndex+1) + "节"}}</p>
+                                <p>{{'第' + digital2Chinese(lessonIndex) + "节"}}</p>
                                 <p class="period">{{ lesson }}</p>
+                                
                             </td>
 
                             <td v-for="(course, courseIndex) in classTableData.courses" :key="courseIndex">
                                 <el-row class="coursename">{{classTableData.courses[courseIndex][lessonIndex]|| '-'}}</el-row>
-                                <el-row v-if="classTableData.courses[courseIndex][lessonIndex]!=='' && classTableData.status[courseIndex][lessonIndex]==1">
+                                <el-row v-if="classTableData.courses[courseIndex][lessonIndex]!=='' && classTableData.election_status[courseIndex][lessonIndex]==2">
                                     <el-col v-if="classTableData.courses[courseIndex][lessonIndex]!==''">
                                         <span class="willpoint">意愿点：</span>
                                         <el-input type="number" size="mini" oninput="if(value>99=99;if(value<0)value=0" v-model="classTableData.willing[courseIndex][lessonIndex]" max="100" min="0" class="block">
@@ -45,7 +46,7 @@
                                         </el-popover>
                                     </el-col>
                                 </el-row>
-                                <el-row v-if="classTableData.courses[courseIndex][lessonIndex]!==''&&classTableData.status[courseIndex][lessonIndex]==2">
+                                <el-row v-if="classTableData.courses[courseIndex][lessonIndex]!==''&&classTableData.election_status[courseIndex][lessonIndex]==1">
                                     <el-col v-if="classTableData.courses[courseIndex][lessonIndex]!==''">
                                         <span class="willpoint">意愿点：</span>
                                         <el-input type="number" size="mini" disabled="true" oninput="if(value>99=99;if(value<0)value=0" v-model="classTableData.willing[courseIndex][lessonIndex]" max="100" min="0" class="block">
@@ -57,7 +58,7 @@
                                         v-model="visible"
                                         >
                                         <div style="text-align: center; margin: 0">
-                                            <p>将返回意愿点{{lassTableData.willing[courseIndex][lessonIndex]}}</p>
+                                            <p>将返回意愿点{{classTableData.willing[courseIndex][lessonIndex]}}</p>
                                             <p>是否决定退课？</p>
                                             <el-button type="primary" size="mini" @click="drop(courseIndex,lessonIndex)">确定</el-button>
                                         </div>
@@ -82,6 +83,7 @@ export default {
   data () {
     return {
       dept: [],
+      will: 99,
       classTableData: {
         lessons: [
           '08:00-08:50',
@@ -156,24 +158,40 @@ export default {
   },
   mounted () {
     let username = getCookie('username').substring(3)
-    axios.get('http://localhost:8000/election/schedule/' + username).then(response => {
-      if (response.success === 'true') {
-        for (var course in response.data) {
-          for (var time in course.times) {
-            var day = time.day - 1
-            var period = time.period - 1
-            this.classTableData.id[day][period] = course.course_id.toString()
-            this.classTableData.courses[day][period] = course.course_id.toString() + ':' + course.name
-            this.classTableData.credit[day][period] = '学分:' + course.credit
-            this.classTableData.lecturer[day][period] = this.classTableData.credit[day][period] + '\n讲师' + course.lecturer
-            this.classTableData.pos[day][period] = this.classTableData.credit[day][period] + '\n教室' + course.pos
-            this.classTableData.willing = course.election.willpoint
-            this.classTableData.status = course.election.status
-            this.classTableData.election_detail = '已选人数:' + course.election.elected_num.toString() + '\n课程容量' + course.election.capacity.toString() + '\n待抽签人数' + course.election.pending_num.toString()
+    // console.log(getCookie('username'))
+    axios.get('http://localhost:8000/election/schedule/' + username, {withCredentials: true}).then(response => {
+      return response.data
+    }).then(data => {
+      if (data.success === true) {
+        data = data.data
+        console.log(data)
+        for (let i = 0; i < data.length; ++i) {
+          console.log(data[i].times.length)
+          let course = data[i]
+          this.will -= course.election.willingpoint
+          for (let j = 0; j < data[i].times.length; ++j) {
+            let day = data[i].times[j].day - 1
+            console.log('d')
+            console.log(day)
+            for (let k = 0; k < course.times[j].period.length; ++k) {
+              let period = course.times[j].period[k] - 1
+              console.log('p')
+              console.log(period)
+              this.classTableData.id[day][period] = course.course_id.toString()
+              this.classTableData.courses[day][period] = course.course_id.toString() + ':' + course.name
+              this.classTableData.details[day][period] = '学分:' + course.credit
+              this.classTableData.details[day][period] = this.classTableData.details[day][period] + '\n讲师' + course.lecturer
+              this.classTableData.details[day][period] = this.classTableData.details[day][period] + '\n教室' + course.pos
+              this.classTableData.willing[day][period] = course.election.willingpoint
+              this.classTableData.election_status[day][period] = course.election.status
+              this.classTableData.election_detail[day][period] = '已选人数:' + course.election.elected_num.toString() + '\n课程容量' + course.election.capacity.toString() + '\n待抽签人数' + course.election.pending_num.toString()
+            }
           }
         }
+        console.log(this.classTableData)
+        this.$forceUpdate()
       } else {
-        alert('未知错误')
+        alert(data.msg)
       }
     })
   },
@@ -189,24 +207,13 @@ export default {
       return identifier === 'week' && (num === 6) ? '日' : character[num]
     },
     modify (courseIndex, lessonIndex) {
-      axios.post('http://localhost:8000/election', {'courseid': this.classTableData.id[courseIndex][lessonIndex], 'willpoint': this.classTableData.willing[courseIndex][lessonIndex], 'type': 1}).then(response => (this.$router.go(0)))
+      axios.post('http://localhost:8000/election/elect', {'course_id': this.classTableData.id[courseIndex][lessonIndex], 'willingpoint': Number(this.classTableData.willing[courseIndex][lessonIndex]), 'type': 1}, {withCredentials: true}).then(response => (this.$router.go(0)))
     },
     remove (courseIndex, lessonIndex) {
-      axios.post('http://localhost:8000/election', {'courseid': this.classTableData.id[courseIndex][lessonIndex], 'willpoint': this.classTableData.willing[courseIndex][lessonIndex], 'type': 2}).then(response => (this.$router.go(0)))
+      axios.post('http://localhost:8000/election/elect', {'course_id': this.classTableData.id[courseIndex][lessonIndex], 'willingpoint': Number(this.classTableData.willing[courseIndex][lessonIndex]), 'type': 2}, {withCredentials: true}).then(response => (this.$router.go(0)))
     },
     drop (courseIndex, lessonIndex) {
-      axios.post('http://localhost:8000/election', {'courseid': this.classTableData.id[courseIndex][lessonIndex], 'willpoint': this.classTableData.willing[courseIndex][lessonIndex], 'type': 3}).then(response => (this.$router.go(0)))
-    },
-    willpoint () {
-      let will = 99
-      for (let i in this.classTableData.willing) {
-        for (let j in i) {
-          if (j !== '') {
-            will = will - Number()
-          }
-        }
-      }
-      return will
+      axios.post('http://localhost:8000/election/elect', {'course_id': this.classTableData.id[courseIndex][lessonIndex], 'willingpoint': Number(this.classTableData.willing[courseIndex][lessonIndex]), 'type': 3}, {withCredentials: true}).then(response => (this.$router.go(0)))
     }
   }
 }

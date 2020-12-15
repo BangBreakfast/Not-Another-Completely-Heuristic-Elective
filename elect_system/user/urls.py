@@ -8,8 +8,8 @@ urlpatterns = [
     path('login', views.login),
     path('logout', views.logout),
     path('password', views.password),
-    re_path(r'password/(\d{0,})', views.password),
+    re_path(r'password/(\w{0,})', views.password),
     path('students', views.students),
-    re_path(r'students/(\d{0,})', views.students),
+    re_path(r'students/(\w{0,})', views.students),
     path('test', views.test),
 ]

@@ -170,7 +170,8 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
             st, wp = 0, 0
             if request.user.is_authenticated:
                 st, wp = Election.getStuElectionNum(
-                    request.user.username, crsId)
+                    request.user.username, course.course_id)
+            print('*******',st,',',wp)
             course_json = {
                 "course_id": course.course_id,
                 "name": course.name,
@@ -191,6 +192,7 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
                 }
             }
             course_json_list.append(course_json)
+        print(len(course_json_list),course_json_list)
         return JsonResponse({'success': True, 'course_list': course_json_list})
 
     elif request.method == 'DELETE':

@@ -40,7 +40,7 @@ def schedule(request: HttpRequest, uid: str = ''):
                 "credit": crs.credit,
                 "main_class": crs.main_class,
                 "sub_class": crs.sub_class,
-                "times": get_time_json(crs.times),
+                "times": get_time_json(crs),
                 "lecturer": crs.lecturer,
                 "pos": crs.pos,
                 "dept": crs.dept,
@@ -104,6 +104,7 @@ def elect(request: HttpRequest):
         wp = 0
     elif wp < 0:
         return JsonResponse({'success': False, 'msg': ERR_TYPE.WP_ERR})
+    print('type', str(typeId), ', wp:', str(wp), ', crsId:', str(courseId))
     elSet = Election.objects.filter(
         stuId=request.user.username, courseId=courseId)
 

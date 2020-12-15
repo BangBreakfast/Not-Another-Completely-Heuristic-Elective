@@ -78,20 +78,21 @@
             <el-table-column label="选课状态" prop="state" width="180"></el-table-column>
             <el-table-column label="选课操作" fixed="right">
              <template slot-scope="scope">
+                <el-row><el-link :href="'stuCourseDetail/'+courseList[(currentPage-1)*pagesize+scope.$index].course_id">详细信息</el-link></el-row>
                 <el-row v-if="courseList[(currentPage-1)*pagesize+scope.$index].election.status===0" type="flex" gutter="20" justify="left">
                     <el-col :span="6">
                         <el-input v-model="courseList[(currentPage-1)*pagesize+scope.$index].election.willpoint" placeholder="意愿点" size="mini" width="100"></el-input>
                     </el-col>
                     <el-col :span="4">
-                        <el-button @click="handleClick(scope.row)" type="primary" size="mini">选课</el-button>
+                        <el-button @click="handleClick(scope.$index,0)" type="primary" size="mini">选课</el-button>
                     </el-col>
                 </el-row>
-                <el-row v-if="courseList[(currentPage-1)*pagesize+scope.$index].election.status===1" type="flex" gutter="20" justify="left">
+                <el-row v-if="courseList[(currentPage-1)*pagesize+scope.$index].election.status===2" type="flex" gutter="20" justify="left">
                     <el-col :span="6">
                         <el-input v-model="courseList[(currentPage-1)*pagesize+scope.$index].election.willpoint" placeholder="意愿点" size="mini" width="100"></el-input>
                     </el-col>
                     <el-col :span="4">
-                        <el-button @click="handleClick(scope.row)" type="primary" size="mini">修改</el-button>
+                        <el-button @click="handleClick(scope.$index,1)" type="primary" size="mini">修改</el-button>
                     </el-col>
                     <el-col :span="4">
                         <el-popover placement="bottom"
@@ -101,13 +102,13 @@
                                 >
                                 <div style="text-align: center; margin: 0">
                                     <p>是否决定退课？</p>
-                                    <el-button type="primary" size="mini" @click="remove(courseIndex,lessonIndex)">确定</el-button>
+                                    <el-button type="primary" size="mini" @click="handleClick(scope.$index,2)">确定</el-button>
                                 </div>
                             <el-button size=mini type="danger" slot="reference">退课</el-button>
                         </el-popover>
                     </el-col>
                 </el-row>
-                <el-row v-if="courseList[(currentPage-1)*pagesize+scope.$index].election.status===2" type="flex" gutter="20" justify="left">
+                <el-row v-if="courseList[(currentPage-1)*pagesize+scope.$index].election.status===1" type="flex" gutter="20" justify="left">
                     <el-col :span="6">
                         <el-input v-model="courseList[(currentPage-1)*pagesize+scope.$index].election.willpoint" :disabled="true" placeholder="意愿点" size="mini" width="100"></el-input>
                     </el-col>
@@ -140,7 +141,7 @@
             >
         </el-pagination>
     </el-row>
-    <div>{{courseList[0].election.elected_num}}</div>
+    <!-- <div>{{courseList}}</div> -->
 </el-main>
 </template>
 <script>
@@ -221,55 +222,62 @@ export default {
   },
   mounted () {
     this.OnSearch = false
-    axios.get('http://localhost:8000/depts', {}).then(response => (this.department = response.department))
+    // axios.get('http://localhost:8000/depts', {withCredentials: true}).then(response => (this.department = response.department))
   },
   methods: {
     onSubmit () {
       console.log('submit!')
       // test for fore-end start
       var period = ''
-      for (var resLesson in this.formInline.lesson) {
+      for (let j = 0; j < this.formInline.lesson.length; ++j) {
         for (let i = 0; i < this.lessons.length; ++i) {
-          if (resLesson === this.lesssons[i]) {
+          if (this.formInline.lesson[j] === this.lessons[i]) {
             if (period !== '') {
-              period = period + ',' + i.toString()
+              period = period + ',' + (i + 1).toString()
             } else {
-              period = i.toString()
+              period = (i + 1).toString()
             }
           }
         }
       }
-      let day = this.date.lastIndexOf(this.formInline.date).toString
-      if (day === '-1') {
+      console.log(period)
+      let day = (this.date.lastIndexOf(this.formInline.date) + 1).toString()
+      console.log(day)
+      if (day === '0') {
         day = ''
       }
-      let mainclass = this.Mainclass.lastIndexOf(this.formInline.Mainclass).toString
+      let mainclass = this.Mainclass.lastIndexOf(this.formInline.Mainclass).toString()
       if (mainclass === '-1') {
         mainclass = ''
       }
-      axios.get('http://localhost:8000/courses?id=' + this.formInline.id +
+      axios.get('http://localhost:8000/course/courses?id=' + this.formInline.id +
           '&period=' + period + '&day=' + day + '&name=' + this.formInline.name +
-          '&main_class' + mainclass + '&sub_class' + this.formInline.Subclass, {}).then(response => {
-        this.courseList = response.course_list
-      })
-      // test for fore-end end
-      this.currentPage = 1
-      for (let i = 0; i < this.pagesize && i < this.courseList.length; i++) {
-        this.courseList[i]['time'] = ''
-        for (let j = 0; j < this.courseList[i].times.length; ++j) {
-          this.courseList[i].time += this.date[this.courseList[i].times[j].day - 1]
-          for (let k = 0; k < this.courseList[i].times[j].period.length; ++k) {
-            this.courseList[i].time += this.lessons[this.courseList[i].times[j].period[k]] + ','
+          '&main_class=' + mainclass + '&sub_class=' + this.formInline.Subclass, {withCredentials: true}).then(response => {
+        return response.data
+      }).then(data => {
+        this.courseList = data.course_list
+        console.log(this.courseList)
+        this.currentPage = 1
+        for (let i = 0; i < this.pagesize && i < this.courseList.length; i++) {
+          this.$set(this.courseList[i], 'time', '')
+          for (let j = 0; j < this.courseList[i].times.length; ++j) {
+            this.courseList[i].time += this.date[this.courseList[i].times[j].day - 1]
+            for (let k = 0; k < this.courseList[i].times[j].period.length; ++k) {
+              this.courseList[i].time += this.lessons[this.courseList[i].times[j].period[k] - 1] + ','
+            }
+            this.courseList[i].time += '\n'
           }
-          this.courseList[i].time += '\n'
+          // console.log(i)
+          let key = 'state'
+          let value = this.courseList[i].election.elected_num.toString() + '/' +
+            this.courseList[i].election.capacity.toString() + ' 待抽签人数:' +
+            this.courseList[i].election.pending_num.toString()
+          this.$set(this.courseList[i], key, value)
         }
-        let key = 'state'
-        let value = this.courseList[i].election.elected_num.toString() + '/' +
-          this.courseList[i].election.capacity.toString() + ' 待抽签人数:' +
-          this.courseList[i].election.pending_num.toString()
-        this.courseList[i][key] = value
-      }
-      this.OnSearch = true
+        this.OnSearch = true
+      // test for fore-end end
+      })
+      console.log(this.courseList)
     },
     refresh () {
       this.formInline = {
@@ -281,6 +289,13 @@ export default {
         Mainclass: '',
         Subclass: ''
       }
+    },
+    handleClick (row, type) {
+      axios.post('http://localhost:8000/election/elect',
+        {'course_id': this.courseList[(this.currentPage - 1) * this.pagesize + row].course_id,
+          'willingpoint': Number(this.courseList[(this.currentPage - 1) * this.pagesize + row].election.willpoint),
+          'type': type},
+        {withCredentials: true}).then(this.$router.go(0))
     },
     handleCurrentChange (currentPage) {
       this.currentPage = currentPage
