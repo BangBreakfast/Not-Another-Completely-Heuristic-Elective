@@ -99,14 +99,28 @@ def elect(request: HttpRequest):
         reqData = json.loads(request.body.decode())
     except:
         traceback.print_exc()
+        logging.error('Json format error, req.body={}'.format(
+            request.body.decode()))
         return JsonResponse({'success': False, 'msg': ERR_TYPE.JSON_ERR})
     typeId = reqData.get('type')
     courseId = reqData.get('course_id')
     wp = reqData.get('willingpoint')
+
     if wp is None:
         wp = 0
-    elif wp < 0:
+    elif type(wp) is int and wp < 0:
         return JsonResponse({'success': False, 'msg': ERR_TYPE.WP_ERR})
+
+    try:
+        typeId = int(typeId)
+        courseId = str(courseId)
+        wp = int(wp)
+    except:
+        traceback.print_exc()
+        logging.warn('Param type error, type(typeId)={}, type(wp)={}, type(courseId)={}'.format(
+            type(typeId), type(wp), type(courseId)))
+        return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
+
     elSet = Election.objects.filter(
         stuId=request.user.username, courseId=courseId)
 
@@ -116,12 +130,15 @@ def elect(request: HttpRequest):
                 request.user.username, courseId, elSet.count()))
             return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_DUP})
         if not Course.isLegal(courseId):
+            logging.error('courseId not legal: courseId={}'.format(courseId))
             return JsonResponse({'success': False, 'msg': ERR_TYPE.COURSE_404})
 
         wpCnt = Election.getWpCnt(request.user.username)
         if wpCnt + wp > 99:
+            logging.error('Fail to add wp {}, cur wp is {}'.format(wp, wpCnt))
             return JsonResponse({'success': False, 'msg': ERR_TYPE.WP_ERR})
         if not checkTime(request.user.username, courseId):
+            logging.error('Time conflict')
             return JsonResponse({'success': False, 'msg': ERR_TYPE.TIME_CONF})
         # TODO: credit check
 
@@ -135,11 +152,13 @@ def elect(request: HttpRequest):
         if elSet.count() != 1:
             logging.error('This election does not exists: stu={}, crs={}'.format(
                 request.user.username, courseId))
-            return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_DUP})
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_404})
         el = elSet.get()
 
         wpCnt = Election.getWpCnt(request.user.username)
         if wpCnt - el.willingpoint + wp > 99:
+            logging.error('Fail to add wp {}, cur wp is {}'.format(
+                wp - el.willingpoint, wpCnt))
             return JsonResponse({'success': False, 'msg': ERR_TYPE.WP_ERR})
         el.willingpoint = wp
         el.save()
@@ -154,7 +173,7 @@ def elect(request: HttpRequest):
             return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_404})
         el = elSet.get()
         if el.status != ELE_TYPE.PENDING:
-            logging.error('This election does not support this operation: '
+            logging.error('This election is not pending, '
                           'stu={}, crs={}, op={}'.format(request.user.username,
                                                          courseId, typeId))
             return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_FAIL})
@@ -169,7 +188,7 @@ def elect(request: HttpRequest):
             return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_404})
         el = elSet.get()
         if el.status != ELE_TYPE.ELECTED:
-            logging.error('This election does not support this operation: '
+            logging.error('This election is not elected, '
                           'stu={}, crs={}, op={}'.format(request.user.username,
                                                          courseId, typeId))
             return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_FAIL})
@@ -177,6 +196,7 @@ def elect(request: HttpRequest):
         return JsonResponse({'success': True})
 
     else:
+        logging.error('Invalid method({})'.format(request.method))
         return JsonResponse({"success": False, 'msg': ERR_TYPE.PARAM_ERR})
 
 
@@ -236,4 +256,3 @@ def runWatcher():
             electionHasStarted = True
         else:
             electionHasStarted = False
-

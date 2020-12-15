@@ -41,14 +41,6 @@ class UserTests(TestCase):
         resp = respData.json()
         self.assertEqual(resp.get('msg'), ERR_TYPE.PARAM_ERR)
 
-        # Json format error
-        # WARNING: Stack trace is printed on console when code reaches here
-        respData = self.client.post(
-            '/user/login', 'not_a_json_string', content_type="application/json")
-        self.assertEqual(type(respData), JsonResponse)
-        resp = respData.json()
-        self.assertEqual(resp.get('msg'), ERR_TYPE.JSON_ERR)
-
         # Wrong password
         respData = self.client.post(
             '/user/login', json.dumps({'uid': '1500012345', 'password': 'zzz'}), content_type="application/json")

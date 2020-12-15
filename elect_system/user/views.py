@@ -25,11 +25,14 @@ def FetchIdAndPasswd(request: HttpRequest):
         reqData = json.loads(request.body.decode())
     except:
         traceback.print_exc()
+        logging.error('Json format error, req.body={}'.format(
+            request.body.decode()))
         return None, None, ERR_TYPE.JSON_ERR
 
     uid = reqData.get('uid')
     password = reqData.get('password')
     if uid is None or password is None:
+        logging.error('Login without params')
         return None, None, ERR_TYPE.PARAM_ERR
     return uid, password, None
 
@@ -58,13 +61,26 @@ def register(request: HttpRequest):
 @csrf_exempt
 def login(request: HttpRequest):
     if request.method != 'POST':
+        logging.warn('Invalid method({})'.format(request.method))
         return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
-    uid, password, errMsg = FetchIdAndPasswd(request)
-    if errMsg:
-        return JsonResponse({'success': False, 'msg': errMsg})
+
+    try:
+        reqData = json.loads(request.body.decode())
+    except:
+        traceback.print_exc()
+        logging.error('Json format error, req.body={}'.format(
+            request.body.decode()))
+        return JsonResponse({'success': False, 'msg': ERR_TYPE.JSON_ERR})
+
+    uid = reqData.get('uid')
+    password = reqData.get('password')
+    if uid is None or password is None:
+        logging.error('Login without params')
+        return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
 
     user = auth.authenticate(username=uid, password=password)
     if user is None:
+        logging.warn('Login fail, uid={}'.format(uid))
         return JsonResponse({'success': False, 'msg': ERR_TYPE.AUTH_FAIL})
     auth.login(request, user)
     return JsonResponse({'success': True})
@@ -162,6 +178,8 @@ def students(request: HttpRequest, uid: str = ''):
     # TODO: For one illegal user info, just skip it and process other users
     if request.method == 'POST':
         if not request.user.is_authenticated or not request.user.is_superuser:
+            logging.warn('Unprivileged user try to create user, uid={}'.format(
+                request.user.username))
             return JsonResponse({
                 'success': False,
                 'msg': ERR_TYPE.NOT_ALLOWED,
@@ -170,10 +188,14 @@ def students(request: HttpRequest, uid: str = ''):
             reqData = json.loads(request.body.decode())
         except:
             traceback.print_exc()
+            logging.error('Json format error, req.body={}'.format(
+                request.body.decode()))
             return JsonResponse({'success': False, 'msg': ERR_TYPE.JSON_ERR})
         stus = reqData.get('students')
         if not isinstance(stus, list):
+            logging.error('no students list')
             return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
+
         for stu in stus:
             uid = stu.get('uid')
             stuName = stu.get('name')
@@ -181,16 +203,25 @@ def students(request: HttpRequest, uid: str = ''):
             stuDept = stu.get('dept')
             stuGrade = stu.get('grade')
             stuPasswd = stu.get('password')
-            if not isinstance(uid, str) or \
-               not isinstance(stuName, str) or \
-               not isinstance(stuGender, bool) or \
-               not isinstance(stuDept, int) or \
-               not isinstance(stuGrade, int) or \
-               not isinstance(stuPasswd, str):
+
+            try:
+                if stuDept:
+                    stuDept = int(stuDept)
+                if stuGrade:
+                    stuGrade = int(stuGrade)
+                if stuGender:
+                    stuGender = bool(stuGender)
+            except:
+                traceback.print_exc()
+                logging.warn('Param type error, type(stuDept)={}, type(stuGrade)={}, type(stuGender)={}'.format(
+                    type(stuDept), type(stuGrade), type(stuGender)))
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
+
             if uid is None or stuPasswd is None:
+                logging.warn('Missing uid or passwd')
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
             if User.objects.filter(username=uid).exists():    # User already exists
+                logging.warn('User uid={} already exists'.format(uid))
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.USER_DUP})
             try:
                 u = User.objects.create_user(
@@ -200,6 +231,7 @@ def students(request: HttpRequest, uid: str = ''):
                 u.save()
             except:
                 traceback.print_exc()
+                logging.error("Unknown error 15213")
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.UNKNOWN})
 
         return JsonResponse({'success': True})
@@ -209,6 +241,8 @@ def students(request: HttpRequest, uid: str = ''):
     elif request.method == 'GET':
         if not request.user.is_authenticated or \
                 ((not request.user.is_superuser) and request.user.username != uid):
+            logging.warn('Unprivileged user try to get user profile, uid={}'.format(
+                request.user.username))
             return JsonResponse({
                 'success': False,
                 'msg': ERR_TYPE.NOT_ALLOWED,
@@ -219,7 +253,7 @@ def students(request: HttpRequest, uid: str = ''):
         else:
             userSet = User.objects.filter(username=uid)
         if not userSet.exists():
-            return JsonResponse({'success': True, 'data': {}})
+            return JsonResponse({'success': True, 'data': []})
         userList = []
         for idx in range(0, userSet.count()):
             user = userSet[idx]
@@ -236,21 +270,28 @@ def students(request: HttpRequest, uid: str = ''):
     # Edit user info
     elif request.method == 'PUT':
         if not request.user.is_authenticated or not request.user.is_superuser:
+            logging.warn('Unprivileged user try to edit user profile, uid={}'.format(
+                request.user.username))
             return JsonResponse({
                 'success': False,
                 'msg': ERR_TYPE.NOT_ALLOWED,
             })
         if uid is '':
+            logging.warn('Missing uid')
             return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
         userSet = User.objects.filter(username=uid)
         if not userSet.exists():
+            logging.warn('User uid={} to edit does not exist'.format(uid))
             return JsonResponse({'success': False, 'msg': ERR_TYPE.USER_404})
         user = userSet.get()
+
         reqData = {}
         try:
             reqData = json.loads(request.body.decode())
         except:
             traceback.print_exc()
+            logging.error('Json format error, req.body={}'.format(
+                request.body.decode()))
             return JsonResponse({'success': False, 'msg': ERR_TYPE.JSON_ERR})
 
         name = reqData.get('name')
@@ -259,6 +300,25 @@ def students(request: HttpRequest, uid: str = ''):
         grade = reqData.get('grade')
         creditLimit = reqData.get('credit_limit')
         passwd = reqData.get('password')
+
+        try:
+            if name:
+                name = str(name)
+            if creditLimit:
+                creditLimit = int(creditLimit)
+            if grade:
+                grade = int(grade)
+            if dept:
+                dept = int(dept)
+            if gender:
+                gender = bool(gender)
+            if passwd:
+                passwd = str(passwd)
+        except:
+            traceback.print_exc()
+            logging.warn('Edit user param type error')
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
+
         if name:
             user.name = name
         if dept:
@@ -277,6 +337,8 @@ def students(request: HttpRequest, uid: str = ''):
     # Delete a user
     elif request.method == 'DELETE':
         if not request.user.is_authenticated or not request.user.is_superuser:
+            logging.warn('Unprivileged user try to delete user, uid={}'.format(
+                request.user.username))
             return JsonResponse({
                 'success': False,
                 'msg': ERR_TYPE.NOT_ALLOWED,

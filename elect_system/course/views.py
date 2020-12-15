@@ -93,7 +93,7 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
             return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
 
         for crs in crss:
-            course_id = crs.get('course_id')
+            courseId = crs.get('course_id')
             name = crs.get('name')
             credit = crs.get('credit')
             lecturer = crs.get('lecturer')
@@ -105,28 +105,35 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
             times = crs.get('times')
             capacity = crs.get('capacity')
 
-            if not isinstance(course_id, int) or \
-                    not isinstance(name, str) or \
-                    not isinstance(credit, int) or \
+            try:
+                courseId = str(courseId)
+                name = str(name)
+                credit = int(credit)
+                dept = int(dept)
+                main_class = int(main_class)
+                capacity = bool(capacity)
+            except:
+                traceback.print_exc()
+                logging.warn('Create course param type error, crs={}'.format(crs))
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
+
+            if not isinstance(name, str) or \
                     not isinstance(lecturer, str) or \
                     not isinstance(pos, str) or \
-                    not isinstance(dept, int) or \
                     not isinstance(detail, str) or \
                     not isinstance(times, list) or \
-                    not isinstance(main_class, int) or \
-                    not isinstance(sub_class, str) or \
-                    not isinstance(capacity, int):
+                    not isinstance(sub_class, str):
                 logging.warn('course attr format err, crs={}'.format(crs))
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
             # TODO: time PARAM CHECK
 
             # course already exists
-            if Course.objects.filter(course_id=course_id).exists():
+            if Course.objects.filter(course_id=courseId).exists():
                 logging.warn(
-                    'Cannot add for course already exist, crsId={}'.format(course_id))
+                    'Cannot add for course already exist, crsId={}'.format(courseId))
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.COURSE_DUP})
 
-            c = Course.objects.create(course_id=course_id, name=name, credit=credit,
+            c = Course.objects.create(course_id=courseId, name=name, credit=credit,
                                       lecturer=lecturer, pos=pos, dept=dept,
                                       main_class=main_class, sub_class=sub_class,
                                       detail=detail, capacity=capacity)
