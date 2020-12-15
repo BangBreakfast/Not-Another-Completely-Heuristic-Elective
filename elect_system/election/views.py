@@ -4,15 +4,18 @@ from django.http.response import JsonResponse
 from .models import Election
 from user.models import User
 from course.models import Course
+from phase.models import Phase
 from course.views import get_time_json
 from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime
 import json
+import time
 import traceback
 from django.utils import timezone
 import logging
 from elect_system.settings import ELE_TYPE, ERR_TYPE
 import random
+
 
 @csrf_exempt
 def schedule(request: HttpRequest, uid: str = ''):
@@ -40,7 +43,7 @@ def schedule(request: HttpRequest, uid: str = ''):
                 "credit": crs.credit,
                 "main_class": crs.main_class,
                 "sub_class": crs.sub_class,
-                "times": get_time_json(crs.times),
+                "times": get_time_json(crs),
                 "lecturer": crs.lecturer,
                 "pos": crs.pos,
                 "dept": crs.dept,
@@ -176,6 +179,7 @@ def elect(request: HttpRequest):
     else:
         return JsonResponse({"success": False, 'msg': ERR_TYPE.PARAM_ERR})
 
+
 def random_select(wpList, num):
     base_wp = 10
     wpList = [x + base_wp for x in wpList]
@@ -189,8 +193,8 @@ def random_select(wpList, num):
             s += x
     return [i for i, x in enumerate(wpList) if x == 0]
 
-@csrf_exempt
-def random_elect(request: HttpRequest):
+
+def random_elect():
     '''
     TODO support this api
     '''
@@ -219,5 +223,17 @@ def random_elect(request: HttpRequest):
                     index += 1
                 else:
                     el.delete()
+    return True
 
-    return JsonResponse({'success': True})
+
+# Watcher thread:
+def runWatcher():
+    while True:
+        time.sleep(60)
+        electionHasStarted = False
+        if not Phase.isOpen() and not electionHasStarted:
+            random_elect()
+            electionHasStarted = True
+        else:
+            electionHasStarted = False
+

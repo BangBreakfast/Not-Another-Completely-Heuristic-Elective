@@ -150,7 +150,7 @@ class UserTests(TestCase):
         # jy info
         jyInfo = {
             'uid': '1600013239',
-            'name': 'JiangYan',
+            'name': "蒋衍",
             'password': '123456',
             'gender': True,
             'dept': 48,
