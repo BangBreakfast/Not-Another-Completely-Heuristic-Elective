@@ -30,11 +30,11 @@ export default {
       activeIndex: res.toString()
     }
   },
-  // mounted () {
-  //   if (getCookie('username').substring(0, 3) !== 'stu') {
-  //     this.$router.push('/stuLogin')
-  //   }
-  // }
+  mounted () {
+    if (getCookie('username').substring(0, 3) !== 'stu') {
+      this.$router.push('/stuLogin')
+    }
+  }
 }
 </script>
 <style scoped>

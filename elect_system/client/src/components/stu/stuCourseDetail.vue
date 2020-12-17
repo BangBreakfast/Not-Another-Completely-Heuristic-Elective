@@ -49,17 +49,16 @@
 <script>
 import axios from 'axios'
 export default {
-    mounted () {
-        axios.get('http://localhost:8000/courses/'+this.$route.params.id, {}).then(response => (this.course = response.course))
-    },
-    data () {
-        return {
-            course: {
-                "course_id": 1233343,   // From elective.pku.edu.cn
-                // "class_no": 1,
-                "name": "软件工程",
-                "credit": 4,
-                "main_class": 1,     // 课程类别, 专业课、通选课、体育课等
+  mounted () {
+    axios.get('http://localhost:8000/course/courses/' + this.$route.params.id + '/detail', {withCredentials: true}).then(response => (this.course = response.data.course_list[0]))
+  },
+  data () {
+    return {
+      course: {
+        'course_id': 1233343,
+        'name': '软件工程',
+        'credit': 4,
+        "main_class": 1,
                 "sub_class": null,   // 通选课类别(ABCDEF) / 英语课类别(ABCC+)，其它大类可缺省
                 "times": [
                     {"day":2, "period":[3,4]},

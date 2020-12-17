@@ -32,11 +32,11 @@ export default {
       activeIndex: res.toString()
     }
   },
-  // mounted () {
-  //   if (getCookie('username').substring(0, 5) !== 'admin') {
-  //     this.$router.push('/adminLogin')
-  //   }
-  // }
+  mounted () {
+    if (getCookie('username').substring(0, 5) !== 'admin') {
+      this.$router.push('/adminLogin')
+    }
+  }
 }
 </script>
 <style lang="postcss" scoped>

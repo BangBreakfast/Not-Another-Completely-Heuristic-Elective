@@ -220,6 +220,7 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
                 }
             }
             course_json_list.append(course_json)
+        print(len(course_json_list),course_json_list)
         return JsonResponse({'success': True, 'course_list': course_json_list})
 
     elif request.method == 'DELETE':

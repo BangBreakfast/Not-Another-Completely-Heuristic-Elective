@@ -1,9 +1,7 @@
 <template>
   <div>
-    <span>{{success}}</span>
     <el-form ref="loginForm" :model="form" :rules="rules" label-width="80px" class="login-box">
-      <h2 class="login-title">学生登录系统</h2>
-      <h3 class="login-title">欢迎登录</h3>
+      <h2 class="login-title">添加学生</h2>
       <el-form-item label="账号" prop="uid">
         <el-input type="text" placeholder="请输入账号" v-model="form.uid"/>
       </el-form-item>
@@ -29,19 +27,18 @@
 </template>
 
 <script>
-import {setCookie, getCookie} from '../../assets/js/cookies.js'
 import axios from 'axios'
 export default {
   name: 'Login',
-  mounted () {
-    if (getCookie('username').substring(0, 3) === 'stu') {
-      this.$router.push('/stuMain')
-    }
-  },
   data () {
     return {
       form: {
         uid: '',
+        name: '吃饭',
+        gender: true,         // True=male, False=female
+        dept: 48,
+        grade: 2017,
+        credit_limit: 30,      // Default is 25
         password: ''
       },
       rules: {
@@ -63,18 +60,17 @@ export default {
         alert('请输入用户名或密码')
       } else {
         /* 接口请求 */
-        axios.post('http://localhost:8000/user/login', this.form, {withCredentials: true}).then((res) => {
+        axios.post('http://localhost:8000/user/students', {students: [this.form]}, {withCredentials: true}).then((res) => {
           console.log(res)
           res = res.data
           // cookie = res.headers
           if (res.success === false) {
-            this.tishi = '该用户不存在或者密码错误'
+            this.tishi = '注册失败'
             this.showTishi = true
           } else if (res.success === true) {
             this.success = 'true'
-            this.tishi = '登录成功'
+            this.tishi = '添加成功'
             this.showTishi = true
-            setCookie('username', 'stu' + this.form.uid, 1000 * 60)
             setTimeout(function () {
               this.$router.push('/stuMain')
             }.bind(this), 1000)

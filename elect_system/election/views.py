@@ -121,7 +121,7 @@ def elect(request: HttpRequest):
             type(typeId), type(wp), type(courseId)))
         return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
 
-    elSet = Election.objects.filter(
+      elSet = Election.objects.filter(
         stuId=request.user.username, courseId=courseId)
 
     if typeId == 0:

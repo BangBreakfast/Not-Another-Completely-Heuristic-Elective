@@ -15,6 +15,7 @@ import adminManual from '@/components/admin/adminManual'
 import adminCourseSearch from '@/components/admin/adminCourseSearch'
 import adminMain from '@/components/admin/adminMain'
 import adminTime from '@/components/admin/adminTime'
+import addStu from '@/components/admin/addStu'
 import ElementUi from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 
@@ -105,6 +106,11 @@ export default new Router({
       path: '/adminLogin',
       name: 'adminLogin',
       component: adminLogin
+    },
+    {
+      path: '/addStu',
+      name: 'addStu',
+      component: addStu
     }
   ]
 })
