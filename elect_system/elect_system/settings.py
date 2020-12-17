@@ -39,10 +39,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
-	'user',
+  	'user',
+
     'course',
     'phase',
-	'election'
+    'election'
 ]
 
 MIDDLEWARE = [
@@ -108,7 +109,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'elect_system.wsgi.application'
-APPEND_SLASH=False 
+APPEND_SLASH = False
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
@@ -116,11 +117,15 @@ APPEND_SLASH=False
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-		'NAME': 'elective',
-		'HOST': '49.234.7.244',
-		'PORT': '3306',
-		'USER': 'se',
-		'PASSWORD': '123456',
+        'NAME': 'elective',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
+        'USER': 'root',
+        'PASSWORD': 'xxxxxx',
+        'TEST': {
+            'CHARSET': 'utf8',
+            'COLLATION': 'utf8_general_ci'
+        }
     }
 }
 
@@ -222,36 +227,40 @@ DEFAULT_CHARSET = 'utf-8'
 
 
 class ERR_TYPE:
-	INVALID_METHOD = 'Invalid method'
-	JSON_ERR = 'Json format error'
-	PARAM_ERR = 'Wrong parameters'
-	AUTH_FAIL = 'Authentication failed'
-	USER_DUP = 'This user already exists'
-	USER_404 = 'This user does not exist'
-	NOT_ALLOWED = 'User is not allowed to perform this operation'
-	ELE_DUP = 'Duplicate election'
-	ELE_404 = 'This election does not exists'
-	ELE_FAIL = 'Election fails'
-	COURSE_DUP = 'This course already exists'
-	COURSE_404 = 'This course does not exists'
-	WP_ERR = 'Invalid willing point'
-	TIME_CONF = 'Course time conflict'
-	UNKNOWN = "Unknown error"
+    INVALID_METHOD = 'Invalid method'
+    JSON_ERR = 'Json format error'
+    PARAM_ERR = 'Wrong parameters'
+    AUTH_FAIL = 'Authentication failed'
+    USER_DUP = 'This user already exists'
+    USER_404 = 'This user does not exist'
+    NOT_ALLOWED = 'User is not allowed to perform this operation'
+    ELE_DUP = 'Duplicate election'
+    ELE_404 = 'This election does not exists'
+    ELE_FAIL = 'Election fails'
+    COURSE_DUP = 'This course already exists'
+    COURSE_404 = 'This course does not exists'
+    WP_ERR = 'Invalid willing point'
+    CRED_ERR = 'Your credit excceeds limit'
+    TIME_CONF = 'Course time conflict'
+    UNKNOWN = "Unknown error"
+
 
 class ELE_TYPE:
-	NONE = 0
-	ELECTED = 1
-	PENDING = 2
+    NONE = 0
+    ELECTED = 1
+    PENDING = 2
+
 
 class OP_TYPE:
-	ELECT = 0
-	EDIT_WP = 1
-	QUIT_PEDING = 2
-	DROP = 3
+    ELECT = 0
+    EDIT_WP = 1
+    QUIT_PEDING = 2
+    DROP = 3
+
 
 class COURSE_TYPE:
-	MAJOR = 0
-	POLITICS = 3
-	GYM = 4
-	ENGLISH = 5
-	GENERAL = 6
+    MAJOR = 0
+    POLITICS = 3
+    GYM = 4
+    ENGLISH = 5
+    GENERAL = 6

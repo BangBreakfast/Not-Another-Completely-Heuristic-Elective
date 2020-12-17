@@ -1,13 +1,20 @@
 from election.models import Election
+from course.models import DEPT
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse, HttpRequest
 from django.http import response
 from django.views.decorators.csrf import csrf_exempt
 import json
 import traceback
+import logging
 import django.contrib.auth as auth
 from course.models import Course, Time
 from elect_system.settings import ERR_TYPE
+
+
+@csrf_exempt
+def dept(request: HttpRequest):
+    return JsonResponse({'success': True, 'data': DEPT})
 
 
 @csrf_exempt
@@ -69,19 +76,24 @@ def check_time(course, day, period):
 def course(request: HttpRequest, crsIdInURL: str = ''):
     if request.method == 'POST':
         if not request.user.is_superuser:
+            logging.warn('user create course without privilege')
             return JsonResponse({'success': False, 'msg': ERR_TYPE.NOT_ALLOWED})
 
         try:
             reqData = json.loads(request.body.decode())
         except:
+            logging.error('Json format error, req.body={}'.format(
+                request.body.decode()))
             traceback.print_exc()
             return JsonResponse({'success': False, 'msg': ERR_TYPE.JSON_ERR})
+
         crss = reqData.get('courses')
         if crss is None or type(crss) is not list:
+            logging.warn('courses param err, req={}'.format(reqData))
             return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
 
         for crs in crss:
-            course_id = crs.get('course_id')
+            courseId = crs.get('course_id')
             name = crs.get('name')
             credit = crs.get('credit')
             lecturer = crs.get('lecturer')
@@ -93,25 +105,35 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
             times = crs.get('times')
             capacity = crs.get('capacity')
 
-            if not isinstance(course_id, int) or \
-                    not isinstance(name, str) or \
-                    not isinstance(credit, int) or \
+            try:
+                courseId = str(courseId)
+                name = str(name)
+                credit = int(credit)
+                dept = int(dept)
+                main_class = int(main_class)
+                capacity = bool(capacity)
+            except:
+                traceback.print_exc()
+                logging.warn('Create course param type error, crs={}'.format(crs))
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
+
+            if not isinstance(name, str) or \
                     not isinstance(lecturer, str) or \
                     not isinstance(pos, str) or \
-                    not isinstance(dept, int) or \
                     not isinstance(detail, str) or \
                     not isinstance(times, list) or \
-                    not isinstance(main_class, int) or \
-                    not isinstance(sub_class, str) or \
-                    not isinstance(capacity, int):
+                    not isinstance(sub_class, str):
+                logging.warn('course attr format err, crs={}'.format(crs))
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
             # TODO: time PARAM CHECK
 
             # course already exists
-            if Course.objects.filter(course_id=course_id).exists():
+            if Course.objects.filter(course_id=courseId).exists():
+                logging.warn(
+                    'Cannot add for course already exist, crsId={}'.format(courseId))
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.COURSE_DUP})
 
-            c = Course.objects.create(course_id=course_id, name=name, credit=credit,
+            c = Course.objects.create(course_id=courseId, name=name, credit=credit,
                                       lecturer=lecturer, pos=pos, dept=dept,
                                       main_class=main_class, sub_class=sub_class,
                                       detail=detail, capacity=capacity)
@@ -121,6 +143,7 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
                 period = tim.get('period')
                 if not isinstance(day, int) or \
                         not isinstance(period, list):
+                    logging.warn('Time field error, time={}'.format(times))
                     return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
                 for per in period:
                     try:
@@ -129,29 +152,35 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
                         c.times.add(t)
                     except:
                         traceback.print_exc()
+                        logging.error('Unknown err 8086')
                         return JsonResponse({'success': False, 'msg': ERR_TYPE.UNKNOWN})
             try:
                 c.save()
             except:
                 traceback.print_exc()
+                logging.error('Unknown err 8087')
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.UNKNOWN})
 
-            return JsonResponse({'success': True})
+        return JsonResponse({'success': True})
 
     elif request.method == 'GET':
         # For queries of args not carried in URL, empty string will be returned
         crsId = request.GET.get('id')
+        dept = request.GET.get('dept')
         period = request.GET.get('period')
         day = request.GET.get('day')
         name = request.GET.get('name')
         main_class = request.GET.get('main_class')
         sub_class = request.GET.get('sub_class')
+
         if crsIdInURL != '':
             crsId = crsIdInURL
 
         course_list = Course.objects.all()
         if crsId:
             course_list = course_list.filter(course_id=crsId)
+        if dept:
+            course_list = course_list.filter(dept=dept)
         if name:
             course_list = course_list.filter(name=name)
         if main_class:
@@ -171,7 +200,6 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
             if request.user.is_authenticated:
                 st, wp = Election.getStuElectionNum(
                     request.user.username, course.course_id)
-            print('*******',st,',',wp)
             course_json = {
                 "course_id": course.course_id,
                 "name": course.name,
@@ -185,7 +213,7 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
                 "detail": course.detail,
                 "election": {
                     "status": st,
-                    "willpoint": wp,
+                    "willingpoint": wp,
                     "elected_num": elected,
                     "capacity": course.capacity,
                     "pending_num": pending
@@ -197,12 +225,14 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
 
     elif request.method == 'DELETE':
         if not request.user.is_superuser:
+            logging.warn('user delete course without privilege')
             return JsonResponse({'success': False, 'msg': ERR_TYPE.NOT_ALLOWED})
         crsSet = Course.objects.filter(course_id=crsIdInURL)
         crsSet.delete()
         return JsonResponse({'success': True})
 
     else:
+        logging.warn('invalid method: {}'.format(request.method))
         return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
 
 
@@ -239,7 +269,7 @@ def courseinfo(request: HttpRequest, course_id: str = ''):
                 "detail": course.detail,
                 "election": {
                     "status": 0,
-                    "willpoint": 99,
+                    "willingpoint": 99,
                     "elected_num": course.elect_num,
                     "capacity": course.capacity,
                     "pending_num": course.elect_newround_num

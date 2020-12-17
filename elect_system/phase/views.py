@@ -63,21 +63,28 @@ def phases(request: HttpRequest, phid: str = ''):
 
     elif request.method == 'POST':
         if not request.user.is_authenticated or not request.user.is_superuser:
+            logging.warn('Unprivileged user try to create phase, uid={}'.format(
+                request.user.username))
             return JsonResponse({
                 'success': False,
                 'msg': ERR_TYPE.NOT_ALLOWED,
             })
-
         try:
             reqData = json.loads(request.body.decode())
         except:
             traceback.print_exc()
-            return JsonResponse({'success': False, 'msg': 'Json format error'})
+            logging.error('Json format error, req.body={}'.format(
+                request.body.decode()))
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.JSON_ERR})
+
         phs = reqData.get('phases')
         if not phs:
-            return JsonResponse({'success': False, 'msg': 'Parameter type error'})
-        if not isinstance(phs, list):
+            logging.warn('Create phase without phs')
             return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
+        if not isinstance(phs, list):
+            logging.warn('phs is not list')
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
+
         for ph in phs:
             phTheme = ph.get('theme')
             phDetail = ph.get('detail')
@@ -86,24 +93,36 @@ def phases(request: HttpRequest, phid: str = ''):
             phIsOpen = ph.get('is_open')
             phStartTime = ph.get('start_time')
             phEndTime = ph.get('end_time')
+
+            try:
+                phTheme = str(phTheme)
+                phDetail = str(phDetail)
+                phIsOpen = bool(phIsOpen)
+                phStartTime = int(phStartTime)
+                phEndTime = int(phEndTime)
+            except:
+                traceback.print_exc()
+                logging.warn('Create phase param type error')
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
+
             if phTheme is None or phIsOpen is None or \
-                phStartTime is None or phEndTime is None:
-                return JsonResponse({'success':False, 'msg':ERR_TYPE.PARAM_ERR})
-            if not isinstance(phTheme, str) or \
-               not isinstance(phIsOpen, bool) or \
-               not isinstance(phStartTime, int) or \
-               not isinstance(phEndTime, int):
-               return JsonResponse({'success':False, 'msg':ERR_TYPE.PARAM_ERR})
-            
-            startDateTime = timezone.make_aware(datetime.fromtimestamp(phStartTime/1000), timezone.get_current_timezone())
-            endDateTime = timezone.make_aware(datetime.fromtimestamp(phEndTime/1000), timezone.get_current_timezone())
+                    phStartTime is None or phEndTime is None:
+                logging.warn('Missing required params')
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
+
+            startDateTime = timezone.make_aware(datetime.fromtimestamp(
+                phStartTime/1000), timezone.get_current_timezone())
+            endDateTime = timezone.make_aware(datetime.fromtimestamp(
+                phEndTime/1000), timezone.get_current_timezone())
             p = Phase(theme=phTheme, isOpen=phIsOpen,  detail=phDetail,
-                startTime=startDateTime, endTime=endDateTime)
+                      startTime=startDateTime, endTime=endDateTime)
             p.save()
         return JsonResponse({'success': True})
 
     elif request.method == 'DELETE':
         if not request.user.is_authenticated or not request.user.is_superuser:
+            logging.warn('Unprivileged user try to delete phase, uid={}'.format(
+                request.user.username))
             return JsonResponse({
                 'success': False,
                 'msg': ERR_TYPE.NOT_ALLOWED,

@@ -5,6 +5,7 @@ from django.db.models.aggregates import Sum
 from user.models import User
 from course.models import Course
 from elect_system.settings import ELE_TYPE
+import django.contrib.auth.models
 
 
 class Election(models.Model):
@@ -14,17 +15,18 @@ class Election(models.Model):
     status = models.IntegerField(default=0)
 
     def getCourseOfStudent(stuId: str) -> list:
-        # if not User.objects.filter(username=stuId).exists():
-        #     logging.error(
-        #         'stuId={} does not exist in Course list'.format(stuId))
-        #     return 0, 0
+        if not User.objects.filter(username=stuId).exists():
+            if not django.contrib.auth.models.User.objects.filter(username=stuId).exists():
+                logging.error(
+                    'stuId={} does not exist in student list'.format(stuId))
+                return None
         crSet = Election.objects.filter(stuId=stuId)
         return list(crSet.all())
 
     def getWpCnt(stuId: str) -> int:
         if not User.objects.filter(username=stuId).exists():
             logging.error(
-                'stuId={} does not exist in Stu list'.format(stuId))
+                'stuId={} does not exist in student list'.format(stuId))
             return 0, 0
         q0 = Q()
         q0.connector = 'OR'
@@ -53,13 +55,13 @@ class Election(models.Model):
         pending = crSet.filter(status=ELE_TYPE.PENDING).count()
         return elected, pending
 
-    def getStuElectionNum(stuId:str, crsId:str):
-        print(stuId,',',crsId,'***')
+    def getStuElectionNum(stuId: str, crsId: str):
         elSet = Election.objects.filter(stuId=stuId, courseId=crsId)
         if elSet.count() == 1:
             return elSet.get().status, elSet.get().willingpoint
         elif elSet.count() > 1:
-            logging.error('Duplicate election: stuId={}, crsId={}'.format(stuId, crsId))
+            logging.error(
+                'Duplicate election: stuId={}, crsId={}'.format(stuId, crsId))
             return 0, 0
         else:
             return 0, 0

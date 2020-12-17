@@ -15,6 +15,11 @@ Course 类
 外键:
 
 '''
+DEPT = [
+    {"id": 1, "name": "数学科学学院"},
+    {"id": 4, "name": "物理学院"},
+    {"id": 48, "name": "信息科学技术学院"},
+]
 
 
 class Time(models.Model):
