@@ -1,33 +1,39 @@
 <template>
     <div>
-        <v-row>{{course.name}}</v-row>
-        <v-row>
-            <v-col>课程ID</v-col><v-col><el-input type="textarea" :placeholder="course.course_id" v-model="course.course_id"></el-input></v-col>
-        </v-row>
-        <v-row>
-            <v-col>班号</v-col><v-col><el-input type="textarea" :placeholder="course.class_no" v-model="course.class_no"></el-input></v-col>
-        </v-row>
-        <v-row>
-            <v-col>学分</v-col><v-col><el-input type="textarea" :placeholder="course.credit" v-model="course.credit"></el-input></v-col>
-        </v-row>
-        <v-row>
-            <v-col>开课院系</v-col><v-col><el-input type="textarea" :placeholder="course.dept" v-model="course.dept"></el-input></v-col>
-        </v-row>
-        <v-row>
-            <v-col>任课老师</v-col><v-col><el-input type="textarea" :placeholder="course.lecturer" v-model="course.lecturer"></el-input></v-col>
-        </v-row>
-        <v-row>
-            <v-col>上课地点</v-col><v-col><el-input type="textarea" :placeholder="course.pos" v-model="course.pos"></el-input></v-col>
-        </v-row>
-        <v-row>
-            <v-col>上课时间</v-col><v-col><el-input type="textarea" :placeholder="course.times" v-model="course.times"></el-input></v-col>
-        </v-row>
-        <el-button type="primary" ></el-button>
+        <table>
+            <el-row><h1>{{course.name}}</h1></el-row>
+            <el-row>
+                <el-col class="col1">课程ID</el-col><el-col class="col2"><el-input type="textarea" :placeholder="this.course.course_id" v-model="this.course.course_id"></el-input></el-col>
+            </el-row>
+            <el-row>
+                <el-col class="col1">班号</el-col><el-col class="col2"><el-input type="textarea" :placeholder="this.course.class_no" v-model="this.course.class_no"></el-input></el-col>
+            </el-row>
+            <el-row>
+                <el-col class="col1">学分</el-col><el-col class="col2"><el-input type="textarea" :placeholder="this.course.credit" v-model="this.course.credit"></el-input></el-col>
+            </el-row>
+            <el-row>
+                <el-col class="col1">开课院系</el-col><el-col class="col2"><el-input type="textarea" :placeholder="this.course.dept" v-model="this.course.dept"></el-input></el-col>
+            </el-row>
+            <el-row>
+                <el-col class="col1">任课老师</el-col><el-col class="col2"><el-input type="textarea" :placeholder="this.course.lecturer" v-model="this.course.lecturer"></el-input></el-col>
+            </el-row>
+            <el-row>
+                <el-col class="col1">上课地点</el-col><el-col class="col2"><el-input type="textarea" :placeholder="this.course.pos" v-model="this.course.pos"></el-input></el-col>
+            </el-row>
+            <el-row>
+                <el-col class="col1">上课时间</el-col><el-col class="col2"><el-input type="textarea" :placeholder="this.course.times" v-model="this.course.times"></el-input></el-col>
+            </el-row>
+        </table>
+        <br>
+        <el-button type="primary" @click="onSubmit">确认</el-button>
     </div>
 </template>
 
 <script>
 export default {
+    mounted () {
+        axios.get('http://localhost:8000/courses/'+this.$route.params.id, {}).then(response => (this.course = response.course))
+    },
     data () {
         return {
             course : {
@@ -55,3 +61,23 @@ export default {
     }
 }
 </script>
+
+<style>
+  table {
+    width: 80%;
+    margin: 0px auto;
+    box-align: center;
+    background-color: azure;
+  }
+  .el-row{
+    margin-bottom: 3%;
+  }
+  .col1{
+    margin-left: 10%;
+    width: 10%;
+  }
+  .col2{
+    margin-right: 10%;
+    width: 70%;
+  }
+</style>

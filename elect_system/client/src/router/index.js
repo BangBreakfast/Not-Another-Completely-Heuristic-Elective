@@ -12,6 +12,7 @@ import adminCore from '@/components/admin/adminCore'
 import adminLogin from '@/components/admin/adminLogin'
 import adminProgram from '@/components/admin/adminProgram'
 import adminManual from '@/components/admin/adminManual'
+import adminCourseEdit from '@/components/admin/adminCourseEdit'
 import adminCourseSearch from '@/components/admin/adminCourseSearch'
 import adminMain from '@/components/admin/adminMain'
 import adminTime from '@/components/admin/adminTime'
@@ -99,6 +100,11 @@ export default new Router({
           path: '/adminTime',
           name: 'adminTime',
           component: adminTime
+        },
+        {
+          path: '/adminCourseEdit',
+          name: 'adminCourseEdit',
+          component: adminCourseEdit
         }
       ]
     },
