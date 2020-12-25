@@ -35,8 +35,12 @@ class User(django.contrib.auth.models.User):
     dept = models.IntegerField(default=48)
     grade = models.IntegerField(default=2017)
     electedCourse = models.CharField(max_length=1024)
+    missedCourses = models.CharField(max_length=1024, null=True)
+
     creditLimit = models.IntegerField(default=25)
+    curCredit = models.IntegerField(default=0)
     willingpointLimit = models.IntegerField(default=99)
+    curWp = models.IntegerField(default=0)  # This field is not used
 
     def isLegal(uid: str) -> bool:
         return User.objects.filter(username=uid)

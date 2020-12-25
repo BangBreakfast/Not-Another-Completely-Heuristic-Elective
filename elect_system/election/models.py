@@ -12,6 +12,7 @@ class Election(models.Model):
     stuId = models.CharField(max_length=64, blank=False)
     courseId = models.CharField(max_length=64, blank=False)
     willingpoint = models.IntegerField(default=0)
+    credit = models.IntegerField(null=True)
     status = models.IntegerField(default=0)
 
     def getCourseOfStudent(stuId: str) -> list:
@@ -27,7 +28,7 @@ class Election(models.Model):
         if not User.objects.filter(username=stuId).exists():
             logging.error(
                 'stuId={} does not exist in student list'.format(stuId))
-            return 0, 0
+            return 0
         q0 = Q()
         q0.connector = 'OR'
         q0.children.append(('status', ELE_TYPE.ELECTED))

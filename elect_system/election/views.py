@@ -5,6 +5,7 @@ from .models import Election
 from user.models import User
 from course.models import Course
 from phase.models import Phase
+from phase.views import isOpenNow
 from course.views import get_time_json
 from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime
@@ -15,6 +16,7 @@ from django.utils import timezone
 import logging
 from elect_system.settings import ELE_TYPE, ERR_TYPE
 import random
+import threading
 
 
 @csrf_exempt
@@ -27,6 +29,12 @@ def schedule(request: HttpRequest, uid: str = ''):
             return JsonResponse({
                 'success': False,
                 'msg': ERR_TYPE.NOT_ALLOWED,
+            })
+        
+        if request.user.is_superuser and uid == request.user.username:
+            return JsonResponse({
+                'success': False,
+                'msg': 'Dean cannot get personal schedule',
             })
 
         elList = Election.getCourseOfStudent(stuId=uid)
@@ -56,8 +64,14 @@ def schedule(request: HttpRequest, uid: str = ''):
                 }
             }
             crsList.append(crDict)
-        return JsonResponse({'success': True, 'data': crsList})
+        
+        u = User.objects.get(username=request.user.username)
 
+        # Should not reach here
+        if u is None:
+            logging.error("User is None")
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.USER_404})
+        return JsonResponse({'success': True, 'curCredit':u.curCredit, 'data': crsList})
     else:
         return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
 
@@ -88,8 +102,14 @@ def checkTime(stuId: str, crsId: str) -> bool:
 @csrf_exempt
 def elect(request: HttpRequest):
     if request.method != 'POST':
+        logging.warn(ERR_TYPE.INVALID_METHOD)
         return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
+    if not isOpenNow():
+        logging.warn('Election request on closed phase')
+        return JsonResponse({'success': False, 'msg': ERR_TYPE.PHASE_ERR})
+
     if not request.user.is_authenticated or request.user.is_superuser:
+        logging.warn(ERR_TYPE.NOT_ALLOWED)
         return JsonResponse({
             'success': False,
             'msg': ERR_TYPE.NOT_ALLOWED,
@@ -114,16 +134,18 @@ def elect(request: HttpRequest):
     try:
         typeId = int(typeId)
         courseId = str(courseId)
-        wp = int(wp)
+        if wp:
+            wp = int(wp)
     except:
         traceback.print_exc()
         logging.warn('Param type error, type(typeId)={}, type(wp)={}, type(courseId)={}'.format(
             type(typeId), type(wp), type(courseId)))
         return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
 
-      elSet = Election.objects.filter(
+    elSet = Election.objects.filter(
         stuId=request.user.username, courseId=courseId)
 
+    # Election (add a new course to pending list)
     if typeId == 0:
         if elSet.count() != 0:
             logging.error('Duplicate election: stu={}, crs={}, count={}'.format(
@@ -133,6 +155,7 @@ def elect(request: HttpRequest):
             logging.error('courseId not legal: courseId={}'.format(courseId))
             return JsonResponse({'success': False, 'msg': ERR_TYPE.COURSE_404})
 
+        # Wp check
         wpCnt = Election.getWpCnt(request.user.username)
         if wpCnt + wp > 99:
             logging.error('Fail to add wp {}, cur wp is {}'.format(wp, wpCnt))
@@ -140,10 +163,25 @@ def elect(request: HttpRequest):
         if not checkTime(request.user.username, courseId):
             logging.error('Time conflict')
             return JsonResponse({'success': False, 'msg': ERR_TYPE.TIME_CONF})
-        # TODO: credit check
 
-        el = Election(willingpoint=wp, courseId=courseId,
+        # Credit check
+        u = User.objects.get(username=request.user.username)
+        c = Course.getCourseObj(crsId=courseId)
+
+        # Should not reach here
+        if u is None or c is None:
+            logging.error("User or course is None")
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
+
+        if u.curCredit + c.credit > u.creditLimit:
+            logging.warn('creditLimit exceeded: {} + {} > {}'.format(
+                u.curCredit, c.credit, u.creditLimit))
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.CRED_ERR})
+
+        el = Election(willingpoint=wp, courseId=courseId, credit=c.credit,
                       stuId=request.user.username, status=ELE_TYPE.PENDING)
+        u.curCredit += c.credit
+        u.save()
         el.save()
         return JsonResponse({'success': True})
 
@@ -177,6 +215,16 @@ def elect(request: HttpRequest):
                           'stu={}, crs={}, op={}'.format(request.user.username,
                                                          courseId, typeId))
             return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_FAIL})
+
+        u = User.objects.get(username=request.user.username)
+
+        # Should not reach here
+        if u is None:
+            logging.error("User is None")
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.USER_404})
+
+        u.curCredit -= el.credit
+        u.save()
         el.delete()
         return JsonResponse({'success': True})
 
@@ -192,14 +240,56 @@ def elect(request: HttpRequest):
                           'stu={}, crs={}, op={}'.format(request.user.username,
                                                          courseId, typeId))
             return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_FAIL})
+
+        u = User.objects.get(username=request.user.username)
+
+        # Should not reach here
+        if u is None:
+            logging.error("User is None")
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.USER_404})
+
+        u.curCredit -= el.credit
+        u.save()
         el.delete()
         return JsonResponse({'success': True})
 
     else:
-        logging.error('Invalid method({})'.format(request.method))
+        logging.error('Invalid typeId({})'.format(typeId))
         return JsonResponse({"success": False, 'msg': ERR_TYPE.PARAM_ERR})
 
 
+def fetchWp(el: Election):
+    return el.willingpoint
+
+
+def courseFairBallot(elList: list, fetchNum: int):
+    elList.sort(key=fetchWp, reverse=True)
+    for i, el in enumerate(elList):
+        if (i < fetchNum):
+            # Succeeded
+            el.status = ELE_TYPE.ELECTED
+            el.save()
+        else:
+            # Failed
+            # TODO: notify this student about his bad luck
+            u = User.objects.get(username=el.stuId)
+            u.curCredit -= el.credit
+            u.save()
+            el.delete()
+
+
+# Ballot fairly: willing point is the only factor that determine ballot result
+def fairBallot():
+    for crs in Course.objects.all():
+        electedNum = Election.objects.filter(courseId=crs.course_id).filter(status=ELE_TYPE.ELECTED).count()
+        pendingSet = Election.objects.filter(courseId=crs.course_id).filter(status=ELE_TYPE.PENDING)
+        capacityLeft = crs.capacity - electedNum
+        logging.info('Balloting on course {}, cap={}, elected={}, pending={}'.format(crs.course_id,
+            crs.capacity, electedNum, pendingSet.count()))
+        courseFairBallot(list(pendingSet), capacityLeft)
+
+
+@DeprecationWarning
 def random_select(wpList, num):
     base_wp = 10
     wpList = [x + base_wp for x in wpList]
@@ -214,6 +304,7 @@ def random_select(wpList, num):
     return [i for i, x in enumerate(wpList) if x == 0]
 
 
+@DeprecationWarning
 def random_elect():
     '''
     TODO support this api
@@ -224,13 +315,17 @@ def random_elect():
         capacity = crs.elect_num
         elect_num = elList.filter(status=ELE_TYPE.ELECTED)
         pending_num = elList.filter(status=ELE_TYPE.PENDING)
+
+        # Student num not exceed, all successfully elected
         if elect_num + pending_num <= capacity:
             for el in elList:
                 if el.status == ELE_TYPE.PENDING:
                     el.status = ELE_TYPE.ELECTED
                     el.save()
+        # Ballot on this course
         else:
             elList = elList.filter(status=ELE_TYPE.PENDING)
+            # All wp of pending elections on this course
             wpList = [el.willingpoint for el in elList]
             elected_stu = random_select(wpList, capacity - elect_num)
             index = 0
@@ -246,13 +341,20 @@ def random_elect():
     return True
 
 
-# Watcher thread:
-def runWatcher():
-    while True:
-        time.sleep(60)
+class watcherThread(threading.Thread):
+    def run(self):
         electionHasStarted = False
-        if not Phase.isOpen() and not electionHasStarted:
-            random_elect()
-            electionHasStarted = True
-        else:
-            electionHasStarted = False
+        while True:
+            time.sleep(20)
+            if not isOpenNow():
+                if not electionHasStarted:
+                    logging.info('Election closed. Ballot begins!')
+                    fairBallot()
+                    electionHasStarted = True
+                logging.info('Balloting (Election closed)')
+            else:
+                electionHasStarted = False
+                logging.info('Election open...')
+
+# NOTE: This line should be comment out when migrating or running unittest
+# watcherThread().start()

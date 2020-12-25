@@ -121,7 +121,7 @@ DATABASES = {
         'HOST': '127.0.0.1',
         'PORT': '3306',
         'USER': 'root',
-        'PASSWORD': 'xxxxxx',
+        'PASSWORD': 'jiangyan',
         'TEST': {
             'CHARSET': 'utf8',
             'COLLATION': 'utf8_general_ci'
@@ -234,6 +234,7 @@ class ERR_TYPE:
     USER_DUP = 'This user already exists'
     USER_404 = 'This user does not exist'
     NOT_ALLOWED = 'User is not allowed to perform this operation'
+    PHASE_ERR = 'Election is closed now'
     ELE_DUP = 'Duplicate election'
     ELE_404 = 'This election does not exists'
     ELE_FAIL = 'Election fails'
@@ -244,11 +245,16 @@ class ERR_TYPE:
     TIME_CONF = 'Course time conflict'
     UNKNOWN = "Unknown error"
 
+    HOT_EDIT = "Edit of current phase is not allowed"
+    GT_ONE = 'Addition number greater than one'
+    OVERLAP = 'Phase time overlap'
+
 
 class ELE_TYPE:
     NONE = 0
     ELECTED = 1
     PENDING = 2
+    WAITING = 3     # Not used
 
 
 class OP_TYPE:

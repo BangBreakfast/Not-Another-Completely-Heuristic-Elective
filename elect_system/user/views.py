@@ -263,6 +263,10 @@ def students(request: HttpRequest, uid: str = ''):
                 'gender': user.gender,
                 'dept': user.dept,
                 'grade': user.grade,
+                'creditLimit': user.creditLimit,
+                'curCredit': user.curCredit,
+                # 'willingpointLimit': user.willingpointLimit,
+                'curWillingpoint':user.curWp    # This field is not used 
             }
             userList.append(userDict)
         return JsonResponse({'success': True, 'data': userList})

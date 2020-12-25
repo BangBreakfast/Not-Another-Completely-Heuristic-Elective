@@ -36,6 +36,9 @@ class Course(models.Model):
     lecturer = models.CharField(max_length=128)
     pos = models.CharField(max_length=128)
     dept = models.IntegerField(blank=False)
+
+    name_eng = models.CharField(max_length=128, null=True)
+    prerequisite = models.CharField(max_length=1024, null=True)
     detail = models.CharField(max_length=1024, null=True)
 
     capacity = models.IntegerField(default=50)
@@ -46,7 +49,7 @@ class Course(models.Model):
     def getCourseObj(crsId: str):
         crsSet = Course.objects.filter(course_id=crsId)
         if crsSet.count() != 1:
-            logging.error('course set size error: courseId={}, size={}'.format(
+            logging.error('courseSet size error: courseId={}, size={}'.format(
                 crsId, crsSet.count()))
             return None
         return crsSet.get()

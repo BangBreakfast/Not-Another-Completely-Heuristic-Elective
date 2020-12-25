@@ -8,24 +8,49 @@ import traceback
 from django.utils import timezone
 import logging
 from elect_system.settings import ERR_TYPE
+# from apscheduler.schedulers.background import BackgroundScheduler
+# from django_apscheduler.jobstores import DjangoJobStore, register_events, register_job
+# from election.views import fairBallot
 
-# Create your views here.
+# sch = BackgroundScheduler()
+# sch.add_jobstore(DjangoJobStore(), 'default')
 
+# # TODO
+# phaseTheme = {}
+
+# @csrf_exempt
+# def phases_new(request: HttpRequest, phid: str = ''):
+#     if request.method == 'POST':
+#         startBallot = sch.add_job(fairBallot, trigger='date', run_date=...)    # Begin ballot
+#         endBallot = sch.add_job(fairBallot, trigger='date', run_date=...)    # End of ballot???
+#         phaseTheme[startBallot.id] = '...'
+#         phaseTheme[endBallot.id] = '...'
+#     elif request.method == 'GET':
+#         jobs = sch.get_jobs()
+#         for j in jobs:
+#             phaseTheme.get(j.id)
+#         return []
 
 def curPhase() -> Phase:
     now = timezone.now()
     ph = None
     phaseSet = Phase.objects.filter(startTime__lte=now)
     phaseSet = phaseSet.filter(endTime__gt=now)
-    if phaseSet.count() != 1:
-        # TODO: Internal error
-        pass
+    if phaseSet.count() == 0:
+        # logging.warn('Not in any phases now')
+        return None
+    elif phaseSet.count() > 1:
+        logging.error('Overlapping phases! count={}'.format(phaseSet.count()))
+        return None
     else:
         ph = phaseSet.get()
     return ph
 
 
 def isOpenNow() -> bool:
+    cp = curPhase()
+    if cp is None:  # TODO: Default should be false?
+        return True
     return curPhase().isOpen
 
 
@@ -69,6 +94,7 @@ def phases(request: HttpRequest, phid: str = ''):
                 'success': False,
                 'msg': ERR_TYPE.NOT_ALLOWED,
             })
+
         try:
             reqData = json.loads(request.body.decode())
         except:
@@ -79,12 +105,21 @@ def phases(request: HttpRequest, phid: str = ''):
 
         phs = reqData.get('phases')
         if not phs:
-            logging.warn('Create phase without phs')
+            logging.error('Create phase without phs')
             return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
         if not isinstance(phs, list):
-            logging.warn('phs is not list')
+            logging.error('phs is not list')
             return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
 
+        phSet = Phase.objects.filter()
+
+        # NOTE: the front end only support adding one phase per request,
+        #       warn on multiple additions
+        if len(phs) > 1:
+            logging.error(ERR_TYPE.GT_ONE)
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.GT_ONE})
+
+        # Only on element in list. Not a real loop
         for ph in phs:
             phTheme = ph.get('theme')
             phDetail = ph.get('detail')
@@ -110,12 +145,22 @@ def phases(request: HttpRequest, phid: str = ''):
                 logging.warn('Missing required params')
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
 
+            # Make system aware of current timezone (Copy from CSDN)
             startDateTime = timezone.make_aware(datetime.fromtimestamp(
                 phStartTime/1000), timezone.get_current_timezone())
             endDateTime = timezone.make_aware(datetime.fromtimestamp(
                 phEndTime/1000), timezone.get_current_timezone())
+
             p = Phase(theme=phTheme, isOpen=phIsOpen,  detail=phDetail,
                       startTime=startDateTime, endTime=endDateTime)
+            for ph in phSet:
+                if p.overlapWith(ph):
+                    logging.error(ERR_TYPE.OVERLAP)
+                    return JsonResponse({'success':False, 'msg':ERR_TYPE.OVERLAP})
+            if p.inThisPhase():
+                logging.error(ERR_TYPE.HOT_EDIT)
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.HOT_EDIT})
+                
             p.save()
         return JsonResponse({'success': True})
 
@@ -128,7 +173,11 @@ def phases(request: HttpRequest, phid: str = ''):
                 'msg': ERR_TYPE.NOT_ALLOWED,
             })
         phSet = Phase.objects.filter(id=phid)
-        phSet.delete()
+        for ph in phSet:
+            if ph.inThisPhase():
+                logging.error('Cannot delete current phase!(id={})'.format(ph.id))
+                continue
+            ph.delete()
         return JsonResponse({'success': True})
     else:
         return JsonResponse({'success': False, 'msg': 'Invalid method'})

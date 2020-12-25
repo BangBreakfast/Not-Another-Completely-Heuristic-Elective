@@ -3,3 +3,4 @@ migrations/
 elect_system/log/*
 .vscode/
 .idea/
+elect_system/__pycache__/*
