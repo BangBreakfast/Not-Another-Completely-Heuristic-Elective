@@ -265,9 +265,11 @@ def courseinfo(request: HttpRequest, course_id: str = ''):
                 "lecturer": course.lecturer,
                 "pos": course.pos,
                 "dept": course.dept,
+                "name_eng": course.name_eng,
+                "prerequisite": course.prerequisite,
                 "detail": course.detail,
                 "election": {
-                    "status": 0,
+                    "status": 0,    # TODO: needed?
                     "willingpoint": 99,
                     "elected_num": course.elect_num,
                     "capacity": course.capacity,

@@ -106,12 +106,12 @@ def test(request: HttpRequest):
         if request.user.is_superuser:
             return JsonResponse({
                 'success': True,
-                'msg': 'This is a superuser!!!',
+                'msg': 'This is a superuser, uid={}'.format(request.user.username),
             })
         else:
             return JsonResponse({
                 'success': True,
-                'msg': 'A common user',
+                'msg': 'A common user, uid={}'.format(request.user.username),
             })
     else:
         logger.warning('Unregistered user')

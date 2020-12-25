@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
   	'user',
-
+    'django_apscheduler',
     'course',
     'phase',
     'election'
@@ -121,7 +121,7 @@ DATABASES = {
         'HOST': '127.0.0.1',
         'PORT': '3306',
         'USER': 'root',
-        'PASSWORD': 'jiangyan',
+        'PASSWORD': 'xxxxxx',
         'TEST': {
             'CHARSET': 'utf8',
             'COLLATION': 'utf8_general_ci'
@@ -248,6 +248,7 @@ class ERR_TYPE:
     HOT_EDIT = "Edit of current phase is not allowed"
     GT_ONE = 'Addition number greater than one'
     OVERLAP = 'Phase time overlap'
+    OUTDATED = "This time point has passed"
 
 
 class ELE_TYPE:

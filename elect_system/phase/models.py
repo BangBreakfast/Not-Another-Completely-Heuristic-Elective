@@ -1,6 +1,7 @@
 from django.db import models
 from datetime import datetime
 from django.utils import timezone
+from apscheduler.schedulers.background import BackgroundScheduler
 
 
 class Phase(models.Model):
@@ -26,7 +27,7 @@ class Phase(models.Model):
                      endTime=timezone.make_aware(datetime.fromtimestamp(
                          pdict["end_time"]/1000), timezone.get_current_timezone()))
 
-# class PhaseManager:
-#     isOpen = True
-    
-#     def 
+
+sch = BackgroundScheduler()
+phaseTheme = {}
+electionOpen = True

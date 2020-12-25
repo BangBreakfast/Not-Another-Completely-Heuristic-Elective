@@ -5,7 +5,7 @@ from .models import Election
 from user.models import User
 from course.models import Course
 from phase.models import Phase
-from phase.views import isOpenNow
+from phase.views import isElectionOpen
 from course.views import get_time_json
 from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime
@@ -104,7 +104,7 @@ def elect(request: HttpRequest):
     if request.method != 'POST':
         logging.warn(ERR_TYPE.INVALID_METHOD)
         return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
-    if not isOpenNow():
+    if not isElectionOpen():
         logging.warn('Election request on closed phase')
         return JsonResponse({'success': False, 'msg': ERR_TYPE.PHASE_ERR})
 
@@ -258,37 +258,6 @@ def elect(request: HttpRequest):
         return JsonResponse({"success": False, 'msg': ERR_TYPE.PARAM_ERR})
 
 
-def fetchWp(el: Election):
-    return el.willingpoint
-
-
-def courseFairBallot(elList: list, fetchNum: int):
-    elList.sort(key=fetchWp, reverse=True)
-    for i, el in enumerate(elList):
-        if (i < fetchNum):
-            # Succeeded
-            el.status = ELE_TYPE.ELECTED
-            el.save()
-        else:
-            # Failed
-            # TODO: notify this student about his bad luck
-            u = User.objects.get(username=el.stuId)
-            u.curCredit -= el.credit
-            u.save()
-            el.delete()
-
-
-# Ballot fairly: willing point is the only factor that determine ballot result
-def fairBallot():
-    for crs in Course.objects.all():
-        electedNum = Election.objects.filter(courseId=crs.course_id).filter(status=ELE_TYPE.ELECTED).count()
-        pendingSet = Election.objects.filter(courseId=crs.course_id).filter(status=ELE_TYPE.PENDING)
-        capacityLeft = crs.capacity - electedNum
-        logging.info('Balloting on course {}, cap={}, elected={}, pending={}'.format(crs.course_id,
-            crs.capacity, electedNum, pendingSet.count()))
-        courseFairBallot(list(pendingSet), capacityLeft)
-
-
 @DeprecationWarning
 def random_select(wpList, num):
     base_wp = 10
@@ -346,7 +315,7 @@ class watcherThread(threading.Thread):
         electionHasStarted = False
         while True:
             time.sleep(20)
-            if not isOpenNow():
+            if not isElectionOpen():
                 if not electionHasStarted:
                     logging.info('Election closed. Ballot begins!')
                     fairBallot()
