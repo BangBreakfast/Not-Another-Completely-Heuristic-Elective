@@ -5,10 +5,18 @@ import json
 import traceback
 import logging
 import django.contrib.auth as auth
-from .models import User, VerificationCode
+from .models import User, VerificationCode, stuLock
 from elect_system.settings import ERR_TYPE
+from threading import Lock
 
 logger = logging.getLogger(__name__)
+
+def init():
+    userSet = User.objects.all()
+    for u in userSet:
+        stuLock[u.username] = Lock()
+
+init()
 
 
 @csrf_exempt
@@ -229,6 +237,7 @@ def students(request: HttpRequest, uid: str = ''):
                     dept=stuDept, grade=stuGrade, password=stuPasswd,
                 )
                 u.save()
+                stuLock[u.uid] = Lock()
             except:
                 traceback.print_exc()
                 logging.error("Unknown error 15213")

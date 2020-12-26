@@ -2,8 +2,7 @@ from django.db import models
 from django.utils import timezone
 import django.contrib.auth.models
 import random
-
-# Create your models here.
+from threading import Lock
 
 
 class VerificationCode(models.Model):
@@ -49,3 +48,5 @@ class User(django.contrib.auth.models.User):
         return '<' + self.username + ',' + str(self.gender) + ',' + \
             str(self.dept) + ',' + str(self.grade) + str(self.creditLimit) + \
             str(self.willingpointLimit) + '>'
+
+stuLock = {}

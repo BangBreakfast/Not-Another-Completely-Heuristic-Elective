@@ -4,6 +4,7 @@ from django.utils import timezone
 from apscheduler.schedulers.background import BackgroundScheduler
 
 
+# NOTE: This class is replaced by apscheduler and is no longer used.
 class Phase(models.Model):
     startTime = models.DateTimeField(blank=False)
     endTime = models.DateTimeField(blank=False)

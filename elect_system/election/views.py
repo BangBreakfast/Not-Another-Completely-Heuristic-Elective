@@ -1,14 +1,17 @@
+from __future__ import with_statement  #: 2.5 only
 import typing
 from django.http.request import HttpRequest
 from django.http.response import JsonResponse
 from .models import Election
 from user.models import User
+from user.models import stuLock
 from course.models import Course
 from phase.models import Phase
 from phase.views import isElectionOpen
 from course.views import get_time_json
 from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime
+from threading import Lock
 import json
 import time
 import traceback
@@ -142,120 +145,128 @@ def elect(request: HttpRequest):
             type(typeId), type(wp), type(courseId)))
         return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
 
-    elSet = Election.objects.filter(
-        stuId=request.user.username, courseId=courseId)
+    # TODO: aquire lock
+    lck = stuLock.get(request.user.username)
+    logging.debug(stuLock)
+    if lck is None:
+        return JsonResponse({'success': False, 'msg': ERR_TYPE.UNKNOWN})
 
-    # Election (add a new course to pending list)
-    if typeId == 0:
-        if elSet.count() != 0:
-            logging.error('Duplicate election: stu={}, crs={}, count={}'.format(
-                request.user.username, courseId, elSet.count()))
-            return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_DUP})
-        if not Course.isLegal(courseId):
-            logging.error('courseId not legal: courseId={}'.format(courseId))
-            return JsonResponse({'success': False, 'msg': ERR_TYPE.COURSE_404})
+    with lck:
+        logging.debug(stuLock)
+        elSet = Election.objects.filter(
+            stuId=request.user.username, courseId=courseId)
 
-        # Wp check
-        wpCnt = Election.getWpCnt(request.user.username)
-        if wpCnt + wp > 99:
-            logging.error('Fail to add wp {}, cur wp is {}'.format(wp, wpCnt))
-            return JsonResponse({'success': False, 'msg': ERR_TYPE.WP_ERR})
-        if not checkTime(request.user.username, courseId):
-            logging.error('Time conflict')
-            return JsonResponse({'success': False, 'msg': ERR_TYPE.TIME_CONF})
+        # Election (add a new course to pending list)
+        if typeId == 0:
+            if elSet.count() != 0:
+                logging.error('Duplicate election: stu={}, crs={}, count={}'.format(
+                    request.user.username, courseId, elSet.count()))
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_DUP})
+            if not Course.isLegal(courseId):
+                logging.error('courseId not legal: courseId={}'.format(courseId))
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.COURSE_404})
 
-        # Credit check
-        u = User.objects.get(username=request.user.username)
-        c = Course.getCourseObj(crsId=courseId)
+            # Wp check
+            wpCnt = Election.getWpCnt(request.user.username)
+            if wpCnt + wp > 99:
+                logging.error('Fail to add wp {}, cur wp is {}'.format(wp, wpCnt))
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.WP_ERR})
+            if not checkTime(request.user.username, courseId):
+                logging.error('Time conflict')
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.TIME_CONF})
 
-        # Should not reach here
-        if u is None or c is None:
-            logging.error("User or course is None")
-            return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
+            # Credit check
+            u = User.objects.get(username=request.user.username)
+            c = Course.getCourseObj(crsId=courseId)
 
-        if u.curCredit + c.credit > u.creditLimit:
-            logging.warn('creditLimit exceeded: {} + {} > {}'.format(
-                u.curCredit, c.credit, u.creditLimit))
-            return JsonResponse({'success': False, 'msg': ERR_TYPE.CRED_ERR})
+            # Should not reach here
+            if u is None or c is None:
+                logging.error("User or course is None")
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
 
-        el = Election(willingpoint=wp, courseId=courseId, credit=c.credit,
-                      stuId=request.user.username, status=ELE_TYPE.PENDING)
-        u.curCredit += c.credit
-        u.save()
-        el.save()
-        return JsonResponse({'success': True})
+            if u.curCredit + c.credit > u.creditLimit:
+                logging.warn('creditLimit exceeded: {} + {} > {}'.format(
+                    u.curCredit, c.credit, u.creditLimit))
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.CRED_ERR})
 
-    # Edit wp
-    elif typeId == 1:
-        if elSet.count() != 1:
-            logging.error('This election does not exists: stu={}, crs={}'.format(
-                request.user.username, courseId))
-            return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_404})
-        el = elSet.get()
+            el = Election(willingpoint=wp, courseId=courseId, credit=c.credit,
+                        stuId=request.user.username, status=ELE_TYPE.PENDING)
+            u.curCredit += c.credit
+            u.save()
+            el.save()
+            return JsonResponse({'success': True})
 
-        wpCnt = Election.getWpCnt(request.user.username)
-        if wpCnt - el.willingpoint + wp > 99:
-            logging.error('Fail to add wp {}, cur wp is {}'.format(
-                wp - el.willingpoint, wpCnt))
-            return JsonResponse({'success': False, 'msg': ERR_TYPE.WP_ERR})
-        el.willingpoint = wp
-        el.save()
-        return JsonResponse({'success': True})
+        # Edit wp
+        elif typeId == 1:
+            if elSet.count() != 1:
+                logging.error('This election does not exists: stu={}, crs={}'.format(
+                    request.user.username, courseId))
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_404})
+            el = elSet.get()
 
-    # Quit pending
-    elif typeId == 2:
-        if elSet.count() != 1:
-            logging.error('This election does not exists: '
-                          'stu={}, crs={}'.format(request.user.username,
-                                                  courseId))
-            return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_404})
-        el = elSet.get()
-        if el.status != ELE_TYPE.PENDING:
-            logging.error('This election is not pending, '
-                          'stu={}, crs={}, op={}'.format(request.user.username,
-                                                         courseId, typeId))
-            return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_FAIL})
+            wpCnt = Election.getWpCnt(request.user.username)
+            if wpCnt - el.willingpoint + wp > 99:
+                logging.error('Fail to add wp {}, cur wp is {}'.format(
+                    wp - el.willingpoint, wpCnt))
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.WP_ERR})
+            el.willingpoint = wp
+            el.save()
+            return JsonResponse({'success': True})
 
-        u = User.objects.get(username=request.user.username)
+        # Quit pending
+        elif typeId == 2:
+            if elSet.count() != 1:
+                logging.error('This election does not exists: '
+                            'stu={}, crs={}'.format(request.user.username,
+                                                    courseId))
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_404})
+            el = elSet.get()
+            if el.status != ELE_TYPE.PENDING:
+                logging.error('This election is not pending, '
+                            'stu={}, crs={}, op={}'.format(request.user.username,
+                                                            courseId, typeId))
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_FAIL})
 
-        # Should not reach here
-        if u is None:
-            logging.error("User is None")
-            return JsonResponse({'success': False, 'msg': ERR_TYPE.USER_404})
+            u = User.objects.get(username=request.user.username)
 
-        u.curCredit -= el.credit
-        u.save()
-        el.delete()
-        return JsonResponse({'success': True})
+            # Should not reach here
+            if u is None:
+                logging.error("User is None")
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.USER_404})
 
-    # Drop
-    elif typeId == 3:
-        if elSet.count() != 1:
-            logging.error('This election does not exists: stu={}, crs={}'.format(
-                request.user.username, courseId))
-            return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_404})
-        el = elSet.get()
-        if el.status != ELE_TYPE.ELECTED:
-            logging.error('This election is not elected, '
-                          'stu={}, crs={}, op={}'.format(request.user.username,
-                                                         courseId, typeId))
-            return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_FAIL})
+            u.curCredit -= el.credit
+            u.save()
+            el.delete()
+            return JsonResponse({'success': True})
 
-        u = User.objects.get(username=request.user.username)
+        # Drop
+        elif typeId == 3:
+            if elSet.count() != 1:
+                logging.error('This election does not exists: stu={}, crs={}'.format(
+                    request.user.username, courseId))
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_404})
+            el = elSet.get()
+            if el.status != ELE_TYPE.ELECTED:
+                logging.error('This election is not elected, '
+                            'stu={}, crs={}, op={}'.format(request.user.username,
+                                                            courseId, typeId))
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_FAIL})
 
-        # Should not reach here
-        if u is None:
-            logging.error("User is None")
-            return JsonResponse({'success': False, 'msg': ERR_TYPE.USER_404})
+            u = User.objects.get(username=request.user.username)
 
-        u.curCredit -= el.credit
-        u.save()
-        el.delete()
-        return JsonResponse({'success': True})
+            # Should not reach here
+            if u is None:
+                logging.error("User is None")
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.USER_404})
 
-    else:
-        logging.error('Invalid typeId({})'.format(typeId))
-        return JsonResponse({"success": False, 'msg': ERR_TYPE.PARAM_ERR})
+            u.curCredit -= el.credit
+            u.save()
+            el.delete()
+            return JsonResponse({'success': True})
+
+        else:
+            logging.error('Invalid typeId({})'.format(typeId))
+            return JsonResponse({"success": False, 'msg': ERR_TYPE.PARAM_ERR})
 
 
 @DeprecationWarning
