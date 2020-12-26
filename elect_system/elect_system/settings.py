@@ -121,7 +121,7 @@ DATABASES = {
         'HOST': '127.0.0.1',
         'PORT': '3306',
         'USER': 'root',
-        'PASSWORD': 'xxxxxx',
+        'PASSWORD': 'jiangyan',
         'TEST': {
             'CHARSET': 'utf8',
             'COLLATION': 'utf8_general_ci'
@@ -245,7 +245,7 @@ class ERR_TYPE:
     TIME_CONF = 'Course time conflict'
     UNKNOWN = "Unknown error"
 
-    HOT_EDIT = "Edit of current phase is not allowed"
+    HOT_EDIT = "Hot edit is not allowed"
     GT_ONE = 'Addition number greater than one'
     OVERLAP = 'Phase time overlap'
     OUTDATED = "This time point has passed"

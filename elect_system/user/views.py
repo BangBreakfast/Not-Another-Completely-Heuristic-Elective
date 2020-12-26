@@ -237,7 +237,7 @@ def students(request: HttpRequest, uid: str = ''):
                     dept=stuDept, grade=stuGrade, password=stuPasswd,
                 )
                 u.save()
-                stuLock[u.uid] = Lock()
+                stuLock[u.username] = Lock()
             except:
                 traceback.print_exc()
                 logging.error("Unknown error 15213")
