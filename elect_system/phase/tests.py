@@ -6,7 +6,7 @@ import json
 from django.utils import timezone
 from datetime import datetime
 
-
+# NOTE: Do not run these tests since apscheduler has replaced class `Phase`
 class PhaseTests(TestCase):
     def test_phases(self):
         u0 = User.objects.create_user('1600013239', password='123456')

@@ -187,7 +187,7 @@ def curPhase() -> Phase:
 @DeprecationWarning
 def isOpenNow() -> bool:
     cp = curPhase()
-    if cp is None:  # TODO: Default should be false?
+    if cp is None:
         return True
     return curPhase().isOpen
 

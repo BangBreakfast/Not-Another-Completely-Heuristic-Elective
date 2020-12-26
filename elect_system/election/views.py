@@ -145,7 +145,7 @@ def elect(request: HttpRequest):
             type(typeId), type(wp), type(courseId)))
         return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
 
-    # TODO: aquire lock
+    # aquire lock
     lck = stuLock.get(request.user.username)
     logging.debug(stuLock)
     if lck is None:
