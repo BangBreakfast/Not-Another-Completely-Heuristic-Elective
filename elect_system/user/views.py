@@ -5,16 +5,18 @@ import json
 import traceback
 import logging
 import django.contrib.auth as auth
-from .models import User, VerificationCode, stuLock
+from .models import User, VerificationCode, stuLock, Message
 from elect_system.settings import ERR_TYPE
 from threading import Lock
 
 logger = logging.getLogger(__name__)
 
+
 def init():
     userSet = User.objects.all()
     for u in userSet:
         stuLock[u.username] = Lock()
+
 
 init()
 
@@ -275,7 +277,7 @@ def students(request: HttpRequest, uid: str = ''):
                 'creditLimit': user.creditLimit,
                 'curCredit': user.curCredit,
                 # 'willingpointLimit': user.willingpointLimit,
-                'curWillingpoint':user.curWp    # This field is not used 
+                'curWillingpoint': user.curWp    # This field is not used
             }
             userList.append(userDict)
         return JsonResponse({'success': True, 'data': userList})
@@ -361,4 +363,69 @@ def students(request: HttpRequest, uid: str = ''):
         userSet.delete()
         return JsonResponse({'success': True})
     else:
+        return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
+
+
+@csrf_exempt
+def message(request: HttpRequest, mid=''):
+    if not request.user.is_authenticated:
+        logging.error('Anonymous user cannot get messages')
+        return JsonResponse({
+            'success': False,
+            'msg': ERR_TYPE.NOT_ALLOWED,
+        })
+
+    # Mark msg as read
+    if request.method == 'POST':
+        # For dean, just return success
+        if request.user.is_superuser:
+            return JsonResponse({'success': True})
+
+        if mid == 'all':
+            u = User.objects.filter(username=request.user.username).get()
+            userMsgSet = u.messages.all()
+            for msg in userMsgSet:
+                msg.hasRead = True
+                msg.save()
+        else:
+            try:
+                mid = int(mid)
+            except:
+                traceback.print_exc()
+                logging.error(
+                    'Read msg param error, id={}'.format(mid))
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
+
+            msgSet = Message.objects.filter(id=mid)
+            if not msgSet.exists():
+                logging.error('Read a nonexistent message, id={}'.format(mid))
+                return JsonResponse({'success': False, 'msg': ERR_TYPE.MSG_404})
+            msg = msgSet.get()
+            msg.hasRead = True
+            msg.save()
+        return JsonResponse({'success': True})
+
+    # Get msg list
+    elif request.method == 'GET':
+        # Deans are not in User table, so no message box for them
+        # To simplify front end implementation, a empty msg list is returned.
+        if request.user.is_superuser:
+            return JsonResponse({'success': True, 'messages': []})
+
+        uSet = User.objects.filter(username=request.user.username)
+        u = uSet.get()
+        msgList = []
+        userMsgSet = u.messages.all()
+        for msg in userMsgSet:
+            msgDict = {
+                'id': msg.id,
+                'time': msg.genTime,
+                'content': msg.content,
+                'hasRead': msg.hasRead
+            }
+            msgList.append(msgDict)
+        return JsonResponse({'success': True, 'messages': msgList})
+
+    else:
+        logging.error(ERR_TYPE.INVALID_METHOD)
         return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})

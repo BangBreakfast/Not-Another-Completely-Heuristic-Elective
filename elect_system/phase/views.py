@@ -10,7 +10,7 @@ from datetime import datetime
 from django.utils import timezone
 from elect_system.settings import ERR_TYPE, ELE_TYPE
 from election.models import Election
-from user.models import User
+from user.models import User, Message
 from course.models import Course
 from django_apscheduler.jobstores import DjangoJobStore, register_events, register_job
 
@@ -65,7 +65,6 @@ def phases_new(request: HttpRequest, phid: str = ''):
             logging.error('phs is not list')
             return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
 
-
         # NOTE: the front end only support adding one phase per request,
         #       warn on multiple additions
         if len(phs) > 1:
@@ -107,11 +106,12 @@ def phases_new(request: HttpRequest, phid: str = ''):
                 logging.error(ERR_TYPE.OUTDATED)
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.OUTDATED})
 
-            newBallot = sch.add_job(fairBallot, trigger='date', run_date=startDateTime)
+            newBallot = sch.add_job(
+                fairBallot, trigger='date', run_date=startDateTime)
             phaseTheme[newBallot.id] = phTheme
-    
+
         return JsonResponse({'success': True})
-        
+
     elif request.method == 'DELETE':
         if not request.user.is_authenticated or not request.user.is_superuser:
             logging.warn('Unprivileged user try to delete phase, uid={}'.format(
@@ -135,29 +135,43 @@ def fetchWp(el: Election):
 def courseFairBallot(elList: list, fetchNum: int):
     elList.sort(key=fetchWp, reverse=True)
     for i, el in enumerate(elList):
+        # Succeeded
         if (i < fetchNum):
-            # Succeeded
-            el.status = ELE_TYPE.ELECTED
+            el.status = ELE_TYPE.NEW_ELECTED
             el.save()
+        # Failed
         else:
-            # Failed
-            # TODO: notify this student about his bad luck
             u = User.objects.get(username=el.stuId)
             u.curCredit -= el.credit
+            el.status = ELE_TYPE.NEW_FAILED
+            el.save()
             u.save()
-            el.delete()
 
+
+def pushMessage(uid: str):
+    # okSet = Election.objects.filter(uid=uid).filter(status=ELE_TYPE.NEW_ELECTED)
+    # for el in okSet:
+    #     crsId = el.courseId
+    #     Election.objects.filter
+    # pass
 
 # Ballot fairly: willing point is the only factor that determine ballot result
 def fairBallot():
     electionOpen = False
     for crs in Course.objects.all():
-        electedNum = Election.objects.filter(courseId=crs.course_id).filter(status=ELE_TYPE.ELECTED).count()
-        pendingSet = Election.objects.filter(courseId=crs.course_id).filter(status=ELE_TYPE.PENDING)
+        electedNum = Election.objects.filter(
+            courseId=crs.course_id).filter(status=ELE_TYPE.ELECTED).count()
+        pendingSet = Election.objects.filter(
+            courseId=crs.course_id).filter(status=ELE_TYPE.PENDING)
         capacityLeft = crs.capacity - electedNum
         logging.info('Balloting on course {}, cap={}, elected={}, pending={}'.format(crs.course_id,
-            crs.capacity, electedNum, pendingSet.count()))
+                                                                                     crs.capacity, electedNum, pendingSet.count()))
         courseFairBallot(list(pendingSet), capacityLeft)
+    for stu in User.objects.all():
+        if stu.is_superuser:
+            logging.error('Why dean appear in User table? uid={}'.format(stu.username))
+        pushMessage(stu.username)
+
     electionOpen = True
 
 
@@ -166,6 +180,7 @@ def fairBallot():
 =========================== Functions below are deprecated ==============================
 =========================================================================================
 """
+
 
 @DeprecationWarning
 def curPhase() -> Phase:
@@ -296,11 +311,11 @@ def phases(request: HttpRequest, phid: str = ''):
             for ph in phSet:
                 if p.overlapWith(ph):
                     logging.error(ERR_TYPE.OVERLAP)
-                    return JsonResponse({'success':False, 'msg':ERR_TYPE.OVERLAP})
+                    return JsonResponse({'success': False, 'msg': ERR_TYPE.OVERLAP})
             if p.inThisPhase():
                 logging.error(ERR_TYPE.HOT_EDIT)
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.HOT_EDIT})
-                
+
             p.save()
         return JsonResponse({'success': True})
 
@@ -315,7 +330,8 @@ def phases(request: HttpRequest, phid: str = ''):
         phSet = Phase.objects.filter(id=phid)
         for ph in phSet:
             if ph.inThisPhase():
-                logging.error('Cannot delete current phase!(id={})'.format(ph.id))
+                logging.error(
+                    'Cannot delete current phase!(id={})'.format(ph.id))
                 continue
             ph.delete()
         return JsonResponse({'success': True})

@@ -44,7 +44,7 @@ class Course(models.Model):
 
     capacity = models.IntegerField(default=50)
     elect_num = models.IntegerField(default=0)
-    elect_newround_num = models.IntegerField(default=0)
+    elect_newround_num = models.IntegerField(default=0) # Not used
     times = models.ManyToManyField(Time)
 
     def getCourseObj(crsId: str):

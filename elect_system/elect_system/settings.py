@@ -244,6 +244,7 @@ class ERR_TYPE:
     CRED_ERR = 'Your credit excceeds limit'
     TIME_CONF = 'Course time conflict'
     UNKNOWN = "Unknown error"
+    MSG_404 = 'This message id doesn\'t exist'
 
     HOT_EDIT = "Hot edit is not allowed"
     GT_ONE = 'Addition number greater than one'
@@ -255,7 +256,8 @@ class ELE_TYPE:
     NONE = 0
     ELECTED = 1
     PENDING = 2
-    WAITING = 3     # Not used
+    NEW_ELECTED = 3
+    NEW_FAILED = 4
 
 
 class OP_TYPE:

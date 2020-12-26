@@ -9,8 +9,10 @@ import django.contrib.auth.models
 
 
 class Election(models.Model):
+    # stuId = models.ForeignKey('User')
     stuId = models.CharField(max_length=64, blank=False)
     courseId = models.CharField(max_length=64, blank=False)
+    # courseId = models.ForeignKey('Course')
     willingpoint = models.IntegerField(default=0)
     credit = models.IntegerField(null=True)
     status = models.IntegerField(default=0)

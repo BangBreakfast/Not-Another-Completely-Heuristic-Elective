@@ -286,9 +286,6 @@ def random_select(wpList, num):
 
 @DeprecationWarning
 def random_elect():
-    '''
-    TODO support this api
-    '''
     crsList = Course.objects.all()
     for crs in crsList:
         elList = Election.objects.filter(courseId=crs.course_id)
