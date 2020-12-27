@@ -30,7 +30,8 @@ class VerificationCode(models.Model):
 
 class Message(models.Model):
     genTime = models.DateTimeField(null=False)
-    content = models.CharField(max_length=1024, null=False)
+    title = models.CharField(max_length=256, null=False)
+    content = models.CharField(max_length=8192, null=False) # Enough?
     hasRead = models.BooleanField(default=False, null=True)
 
 

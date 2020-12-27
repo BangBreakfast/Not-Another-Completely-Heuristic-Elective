@@ -425,15 +425,19 @@ def message(request: HttpRequest, mid=''):
         u = uSet.get()
         msgList = []
         userMsgSet = u.messages.all()
+        unReadCnt = 0
         for msg in userMsgSet:
             msgDict = {
                 'id': msg.id,
                 'time': int(msg.genTime.timestamp())*1000,
+                'title': msg.title,
                 'content': msg.content,
                 'hasRead': msg.hasRead
             }
             msgList.append(msgDict)
-        return JsonResponse({'success': True, 'messages': msgList})
+            if not msg.hasRead:
+                unReadCnt += 1
+        return JsonResponse({'success': True, 'unReadNum': unReadCnt, 'messages': msgList})
 
     else:
         logging.error(ERR_TYPE.INVALID_METHOD)
