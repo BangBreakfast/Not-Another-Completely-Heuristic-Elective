@@ -33,48 +33,44 @@ def schedule(request: HttpRequest, uid: str = ''):
                 'success': False,
                 'msg': ERR_TYPE.NOT_ALLOWED,
             })
-        
+
         if request.user.is_superuser and uid == request.user.username:
             return JsonResponse({
                 'success': False,
                 'msg': 'Dean cannot get personal schedule',
             })
 
-        elList = Election.getCourseOfStudent(stuId=uid)
+        elList = Election.getCourseOfStudent(uid)
         crsList = []
         for el in elList:
-            courseId = el.courseId
-            crs = Course.getCourseObj(courseId)
-            if crs is None:
-                continue
-            electedNum, pendingNum = Election.getCourseElecionNum(courseId)
+            electedNum, pendingNum = Election.getCourseElecionNum(el.crs.course_id)
             crDict = {
-                "course_id": crs.course_id,
-                "name": crs.name,
-                "credit": crs.credit,
-                "main_class": crs.main_class,
-                "sub_class": crs.sub_class,
-                "times": get_time_json(crs),
-                "lecturer": crs.lecturer,
-                "pos": crs.pos,
-                "dept": crs.dept,
+                "course_id": el.crs.course_id,
+                "name": el.crs.name,
+                "credit": el.crs.credit,
+                "main_class": el.crs.main_class,
+                "sub_class": el.crs.sub_class,
+                "times": get_time_json(el.crs),
+                "lecturer": el.crs.lecturer,
+                "pos": el.crs.pos,
+                "dept": el.crs.dept,
                 "election": {
                     "status": el.status,
                     "willingpoint": el.willingpoint,
                     "elected_num": electedNum,
-                    "capacity": crs.capacity,
+                    "capacity": el.crs.capacity,
                     "pending_num": pendingNum
                 }
             }
             crsList.append(crDict)
-        
+
         u = User.objects.get(username=request.user.username)
 
         # Should not reach here
         if u is None:
             logging.error("User is None")
             return JsonResponse({'success': False, 'msg': ERR_TYPE.USER_404})
-        return JsonResponse({'success': True, 'curCredit':u.curCredit, 'data': crsList})
+        return JsonResponse({'success': True, 'curCredit': u.curCredit, 'data': crsList})
     else:
         return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
 
@@ -92,8 +88,7 @@ def checkTime(stuId: str, crsId: str) -> bool:
     # All courses that are elected or pending
     epList = Election.getCourseOfStudent(stuId)
     for ce in epList:
-        crsId_ = ce.courseId
-        c = Course.getCourseObj(crsId_)
+        c = Course.getCourseObj(ce.crs.course_id)
         for time in c.times.all():
             d = time.day
             p = time.period
@@ -147,14 +142,12 @@ def elect(request: HttpRequest):
 
     # aquire lock
     lck = stuLock.get(request.user.username)
-    logging.debug(stuLock)
     if lck is None:
         return JsonResponse({'success': False, 'msg': ERR_TYPE.UNKNOWN})
 
     with lck:
-        logging.debug(stuLock)
         elSet = Election.objects.filter(
-            stuId=request.user.username, courseId=courseId)
+            stu__username=request.user.username, crs=courseId)
 
         # Election (add a new course to pending list)
         if typeId == 0:
@@ -163,13 +156,15 @@ def elect(request: HttpRequest):
                     request.user.username, courseId, elSet.count()))
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_DUP})
             if not Course.isLegal(courseId):
-                logging.error('courseId not legal: courseId={}'.format(courseId))
+                logging.error(
+                    'courseId not legal: courseId={}'.format(courseId))
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.COURSE_404})
 
             # Wp check
             wpCnt = Election.getWpCnt(request.user.username)
             if wpCnt + wp > 99:
-                logging.error('Fail to add wp {}, cur wp is {}'.format(wp, wpCnt))
+                logging.error(
+                    'Fail to add wp {}, cur wp is {}'.format(wp, wpCnt))
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.WP_ERR})
             if not checkTime(request.user.username, courseId):
                 logging.error('Time conflict')
@@ -189,8 +184,8 @@ def elect(request: HttpRequest):
                     u.curCredit, c.credit, u.creditLimit))
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.CRED_ERR})
 
-            el = Election(willingpoint=wp, courseId=courseId, credit=c.credit,
-                        stuId=request.user.username, status=ELE_TYPE.PENDING)
+            el = Election(willingpoint=wp, crs=c, credit=c.credit,
+                          stu=u, status=ELE_TYPE.PENDING)
             u.curCredit += c.credit
             u.save()
             el.save()
@@ -217,25 +212,18 @@ def elect(request: HttpRequest):
         elif typeId == 2:
             if elSet.count() != 1:
                 logging.error('This election does not exists: '
-                            'stu={}, crs={}'.format(request.user.username,
-                                                    courseId))
+                              'stu={}, crs={}'.format(request.user.username,
+                                                      courseId))
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_404})
             el = elSet.get()
             if el.status != ELE_TYPE.PENDING:
                 logging.error('This election is not pending, '
-                            'stu={}, crs={}, op={}'.format(request.user.username,
-                                                            courseId, typeId))
+                              'stu={}, crs={}, op={}'.format(request.user.username,
+                                                             courseId, typeId))
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_FAIL})
 
-            u = User.objects.get(username=request.user.username)
-
-            # Should not reach here
-            if u is None:
-                logging.error("User is None")
-                return JsonResponse({'success': False, 'msg': ERR_TYPE.USER_404})
-
-            u.curCredit -= el.credit
-            u.save()
+            el.stu.curCredit -= el.crs.credit
+            el.stu.save()
             el.delete()
             return JsonResponse({'success': True})
 
@@ -248,19 +236,12 @@ def elect(request: HttpRequest):
             el = elSet.get()
             if el.status != ELE_TYPE.ELECTED:
                 logging.error('This election is not elected, '
-                            'stu={}, crs={}, op={}'.format(request.user.username,
-                                                            courseId, typeId))
+                              'stu={}, crs={}, op={}'.format(request.user.username,
+                                                             courseId, typeId))
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.ELE_FAIL})
 
-            u = User.objects.get(username=request.user.username)
-
-            # Should not reach here
-            if u is None:
-                logging.error("User is None")
-                return JsonResponse({'success': False, 'msg': ERR_TYPE.USER_404})
-
-            u.curCredit -= el.credit
-            u.save()
+            el.stu.curCredit -= el.crs.credit
+            el.stu.save()
             el.delete()
             return JsonResponse({'success': True})
 

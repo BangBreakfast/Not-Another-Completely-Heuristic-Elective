@@ -4,10 +4,12 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 import traceback
 import logging
+import time
 import django.contrib.auth as auth
 from .models import User, VerificationCode, stuLock, Message
 from elect_system.settings import ERR_TYPE
 from threading import Lock
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -185,7 +187,6 @@ def password(request: HttpRequest, uid: str = ''):
 @csrf_exempt
 def students(request: HttpRequest, uid: str = ''):
     # Multiple users are created at a time
-    # TODO: For one illegal user info, just skip it and process other users
     if request.method == 'POST':
         if not request.user.is_authenticated or not request.user.is_superuser:
             logging.warn('Unprivileged user try to create user, uid={}'.format(
@@ -213,6 +214,7 @@ def students(request: HttpRequest, uid: str = ''):
             stuDept = stu.get('dept')
             stuGrade = stu.get('grade')
             stuPasswd = stu.get('password')
+            stuCreditLimit = stu.get('credit_limit')
 
             try:
                 if stuDept:
@@ -221,6 +223,12 @@ def students(request: HttpRequest, uid: str = ''):
                     stuGrade = int(stuGrade)
                 if stuGender:
                     stuGender = bool(stuGender)
+                else:
+                    stuGender = True
+                if stuCreditLimit:
+                    stuCreditLimit = int(stuCreditLimit)
+                else:
+                    stuCreditLimit = 25
             except:
                 traceback.print_exc()
                 logging.warn('Param type error, type(stuDept)={}, type(stuGrade)={}, type(stuGender)={}'.format(
@@ -237,6 +245,7 @@ def students(request: HttpRequest, uid: str = ''):
                 u = User.objects.create_user(
                     username=uid, name=stuName, gender=stuGender,
                     dept=stuDept, grade=stuGrade, password=stuPasswd,
+                    creditLimit=stuCreditLimit
                 )
                 u.save()
                 stuLock[u.username] = Lock()
@@ -419,7 +428,7 @@ def message(request: HttpRequest, mid=''):
         for msg in userMsgSet:
             msgDict = {
                 'id': msg.id,
-                'time': msg.genTime,
+                'time': int(msg.genTime.timestamp())*1000,
                 'content': msg.content,
                 'hasRead': msg.hasRead
             }

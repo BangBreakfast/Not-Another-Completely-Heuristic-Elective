@@ -141,28 +141,53 @@ def courseFairBallot(elList: list, fetchNum: int):
             el.save()
         # Failed
         else:
-            u = User.objects.get(username=el.stuId)
-            u.curCredit -= el.credit
+            el.stu.curCredit -= el.crs.credit
             el.status = ELE_TYPE.NEW_FAILED
             el.save()
-            u.save()
+            el.stu.save()
 
 
 def pushMessage(uid: str):
-    # okSet = Election.objects.filter(uid=uid).filter(status=ELE_TYPE.NEW_ELECTED)
-    # for el in okSet:
-    #     crsId = el.courseId
-    #     Election.objects.filter
-    # pass
+    msgStr = '抽签结束，您成功选中的课程：'
+    okSet = Election.objects.filter(stu__username=uid).filter(status=ELE_TYPE.NEW_ELECTED)
+    idx = 0
+    for el in okSet:
+        if idx > 0:
+            msgStr += '、'
+        msgStr += (el.crs.name)
+        el.status = ELE_TYPE.ELECTED
+        el.save()
+        idx += 1
+    
+    msgStr += '，未选中的课程：'
+    failSet = Election.objects.filter(stu__username=uid).filter(status=ELE_TYPE.NEW_FAILED)
+    idx = 0
+    for el in failSet:
+        if idx > 0:
+            msgStr += '、'
+        msgStr += (el.crs.name)
+        el.delete()
+        idx += 1
+    msgStr += '。'
+    
+    if okSet.exists() or failSet.exists():
+        uSet = User.objects.filter(username=uid)
+        u = uSet.get()
+        curTime = timezone.make_aware(datetime.now())
+        msg = Message.objects.create(genTime=curTime, content=msgStr, hasRead=False)
+        msg.save()
+        u.messages.add(msg)
+        u.save()
+
 
 # Ballot fairly: willing point is the only factor that determine ballot result
 def fairBallot():
     electionOpen = False
     for crs in Course.objects.all():
         electedNum = Election.objects.filter(
-            courseId=crs.course_id).filter(status=ELE_TYPE.ELECTED).count()
+            crs=crs.course_id).filter(status=ELE_TYPE.ELECTED).count()
         pendingSet = Election.objects.filter(
-            courseId=crs.course_id).filter(status=ELE_TYPE.PENDING)
+            crs=crs.course_id).filter(status=ELE_TYPE.PENDING)
         capacityLeft = crs.capacity - electedNum
         logging.info('Balloting on course {}, cap={}, elected={}, pending={}'.format(crs.course_id,
                                                                                      crs.capacity, electedNum, pendingSet.count()))

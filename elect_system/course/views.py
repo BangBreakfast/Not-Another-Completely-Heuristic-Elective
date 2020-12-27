@@ -10,7 +10,7 @@ import logging
 import django.contrib.auth as auth
 from course.models import Course, Time
 from elect_system.settings import ERR_TYPE, ELE_TYPE
-
+from django.db import IntegrityError
 
 @csrf_exempt
 def dept(request: HttpRequest):
@@ -330,16 +330,16 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
         if not request.user.is_superuser:
             logging.error('user delete course without privilege')
             return JsonResponse({'success': False, 'msg': ERR_TYPE.NOT_ALLOWED})
-        elSet = Election.objects.filter(courseId=crsIdInURL)
+        elSet = Election.objects.filter(crs=crsIdInURL)
 
-        # TODO: Concurrency problem - course elected between this if and real deletion?
-        if elSet.filter(status=ELE_TYPE.ELECTED).exists() or elSet.filter(status=ELE_TYPE.PENDING):
+        try:
+            crsSet = Course.objects.filter(course_id=crsIdInURL)
+            crsSet.delete()
+        except IntegrityError:
             logging.error(
                 'Cannot delete courses with students elected or pending, crsId={}'.format(crsIdInURL))
             return JsonResponse({'success': False, 'msg': ERR_TYPE.HOT_EDIT})
 
-        crsSet = Course.objects.filter(course_id=crsIdInURL)
-        crsSet.delete()
         return JsonResponse({'success': True})
 
     else:
