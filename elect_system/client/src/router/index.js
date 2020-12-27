@@ -101,7 +101,7 @@ export default new Router({
           component: adminTime
         },
         {
-          path: '/adminCourseEdit',
+          path: '/adminCourseEdit/:id',
           name: 'adminCourseEdit',
           component: adminCourseEdit
         }
