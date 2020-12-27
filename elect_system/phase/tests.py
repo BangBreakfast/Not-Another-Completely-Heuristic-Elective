@@ -1,9 +1,12 @@
 from django.test import TestCase
 from user.models import User
+from phase.models import Phase
 from elect_system.settings import ERR_TYPE
 import json
+from django.utils import timezone
+from datetime import datetime
 
-
+# NOTE: Do not run these tests since apscheduler has replaced class `Phase`
 class PhaseTests(TestCase):
     def test_phases(self):
         u0 = User.objects.create_user('1600013239', password='123456')
@@ -64,24 +67,56 @@ class PhaseTests(TestCase):
             "theme": "prepare1",
             "is_open": True,
             "detail": "Nothing here...",
-            "start_time": 1601012345000,
-            "end_time": 1701012345000,
+            "start_time": 1400012345000,
+            "end_time": 1500012345000,
         }
         p1 = {
             "theme": "ballot1",
             "is_open": False,
             "detail": "Nothing here...",
-            "start_time": 1701012345000,
-            "end_time": 1801012345000,
+            "start_time": 1500012345000,
+            "end_time": 1600012345000,
         }
+        p2 = {
+            "theme": "ballot2",
+            "is_open": False,
+            "detail": "Nothing here...",
+            "start_time": 1450012345000,
+            "end_time": 1550012345000,
+        }
+        p3 = {
+            "theme": "ballot2",
+            "is_open": False,
+            "detail": "Nothing here...",
+            "start_time": 1450012345000,
+            "end_time": 1850012345000,
+        }
+        self.assertEqual(Phase.fromDict(p0).overlapWith(
+            Phase.fromDict(p1)), False)
+        self.assertEqual(Phase.fromDict(p0).overlapWith(
+            Phase.fromDict(p2)), True)
+        self.assertEqual(Phase.fromDict(p0).overlapWith(
+            Phase.fromDict(p3)), True)
+
+        self.assertEqual(Phase.fromDict(p0).inThisPhase(), False)
+        self.assertEqual(Phase.fromDict(p3).inThisPhase(), True)
+
         respData = self.client.post(
-            '/phase/phases', json.dumps({'phases': [p0, p1]}), content_type="application/json")
+            '/phase/phases', json.dumps({'phases': [p0, ]}), content_type="application/json")
         resp = respData.json()
+        if resp.get('msg'):
+            print('Error msg: ', resp.get('msg'))
         self.assertEqual(resp.get('success'), True)
+
+        # Insert a overlap phase
+        respData = self.client.post(
+            '/phase/phases', json.dumps({'phases': [p2, ]}), content_type="application/json")
+        resp = respData.json()
+        self.assertEqual(resp.get('msg'), ERR_TYPE.OVERLAP)
 
         respData = self.client.get('/phase/phases')
         resp = respData.json()
-        self.assertEqual(len(resp.get('data')), 2)
+        self.assertEqual(len(resp.get('data')), 1)
         phaseId = resp.get('data')[0].get('id')
 
         # Dean delete a phase
@@ -89,11 +124,12 @@ class PhaseTests(TestCase):
         resp = respData.json()
         self.assertEqual(resp.get('success'), True)
 
+        # Insert a hot phase
+        respData = self.client.post(
+            '/phase/phases', json.dumps({'phases': [p3, ]}), content_type="application/json")
+        resp = respData.json()
+        self.assertEqual(resp.get('msg'), ERR_TYPE.HOT_EDIT)
+
         respData = self.client.get('/phase/phases')
         resp = respData.json()
-        self.assertEqual(len(resp.get('data')), 1)
-
-        # Dean logout
-        respData = self.client.post('/user/logout')
-        resp = respData.json()
-        self.assertEqual(resp.get('success'), True)
+        self.assertEqual(len(resp.get('data')), 0)

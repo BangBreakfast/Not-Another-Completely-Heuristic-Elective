@@ -2,8 +2,7 @@ from django.db import models
 from django.utils import timezone
 import django.contrib.auth.models
 import random
-
-# Create your models here.
+from threading import Lock
 
 
 class VerificationCode(models.Model):
@@ -29,14 +28,23 @@ class VerificationCode(models.Model):
         return codeGen
 
 
+class Message(models.Model):
+    genTime = models.DateTimeField(null=False)
+    content = models.CharField(max_length=1024, null=False)
+    hasRead = models.BooleanField(default=False, null=True)
+
+
 class User(django.contrib.auth.models.User):
     name = models.CharField(max_length=128)
     gender = models.BooleanField(default=True)  # male=True, female=False
     dept = models.IntegerField(default=48)
     grade = models.IntegerField(default=2017)
-    electedCourse = models.CharField(max_length=1024)
+    messages = models.ManyToManyField(Message)
+
     creditLimit = models.IntegerField(default=25)
+    curCredit = models.IntegerField(default=0)
     willingpointLimit = models.IntegerField(default=99)
+    curWp = models.IntegerField(default=0)  # Not used
 
     def isLegal(uid: str) -> bool:
         return User.objects.filter(username=uid)
@@ -45,3 +53,7 @@ class User(django.contrib.auth.models.User):
         return '<' + self.username + ',' + str(self.gender) + ',' + \
             str(self.dept) + ',' + str(self.grade) + str(self.creditLimit) + \
             str(self.willingpointLimit) + '>'
+
+
+
+stuLock = {}

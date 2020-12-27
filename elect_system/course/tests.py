@@ -3,7 +3,7 @@ from .models import Course
 from user.models import User
 import json
 from elect_system.settings import ERR_TYPE
-
+from .views import check_time_format
 
 class CourseTests(TestCase):
     def test_courses(self):
@@ -112,6 +112,26 @@ class CourseTests(TestCase):
             "detail": "课程采取以实验贯穿教学组织方式进行教学。具体作法是，精选若干演示试验，组织学生观察现象，提出问題，讲解相关的物理规律，引导学生感悟物理学的精髓，使学生对物理学获得一个初步而准确的整体印象，作为今后自身扩展科技知识的基础。",
             "capacity": 120,
         }
+
+        # All error time format
+        testTimes0 = [
+            {"period": [3,4]},
+        ]
+        testTimes1 = [
+            {"day":2, "period":3},
+        ]
+        testTimes2 = [
+            {"day":2, "period":[3,20]},
+        ]
+        testTimes3 = [
+            {"day":8, "period":[3,4]},
+        ]
+        self.assertEqual(check_time_format(testTimes0), False)
+        self.assertEqual(check_time_format(testTimes1), False)
+        self.assertEqual(check_time_format(testTimes2), False)
+        self.assertEqual(check_time_format(testTimes3), False)
+        self.assertEqual(check_time_format(crs0['times']), True)
+
         # param error
         respData = self.client.post(
             '/course/courses', json.dumps(crs0), content_type="application/json")

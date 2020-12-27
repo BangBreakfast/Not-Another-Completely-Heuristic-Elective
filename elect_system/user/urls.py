@@ -11,5 +11,7 @@ urlpatterns = [
     re_path(r'password/(\w{0,})', views.password),
     path('students', views.students),
     re_path(r'students/(\w{0,})', views.students),
+    path('message', views.message),
+    re_path(r'message/(\w{0,})', views.message),
     path('test', views.test),
 ]

@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
   	'user',
-
+    'django_apscheduler',
     'course',
     'phase',
     'election'
@@ -121,7 +121,7 @@ DATABASES = {
         'HOST': '127.0.0.1',
         'PORT': '3306',
         'USER': 'root',
-        'PASSWORD': 'xxxxxx',
+        'PASSWORD': 'jiangyan',
         'TEST': {
             'CHARSET': 'utf8',
             'COLLATION': 'utf8_general_ci'
@@ -234,6 +234,7 @@ class ERR_TYPE:
     USER_DUP = 'This user already exists'
     USER_404 = 'This user does not exist'
     NOT_ALLOWED = 'User is not allowed to perform this operation'
+    PHASE_ERR = 'Election is closed now'
     ELE_DUP = 'Duplicate election'
     ELE_404 = 'This election does not exists'
     ELE_FAIL = 'Election fails'
@@ -243,12 +244,20 @@ class ERR_TYPE:
     CRED_ERR = 'Your credit excceeds limit'
     TIME_CONF = 'Course time conflict'
     UNKNOWN = "Unknown error"
+    MSG_404 = 'This message id doesn\'t exist'
+
+    HOT_EDIT = "Hot edit is not allowed"
+    GT_ONE = 'Addition number greater than one'
+    OVERLAP = 'Phase time overlap'
+    OUTDATED = "This time point has passed"
 
 
 class ELE_TYPE:
     NONE = 0
     ELECTED = 1
     PENDING = 2
+    NEW_ELECTED = 3
+    NEW_FAILED = 4
 
 
 class OP_TYPE:
