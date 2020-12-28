@@ -29,7 +29,7 @@ class Time(models.Model):
 
 
 class Course(models.Model):
-    course_id = models.AutoField(primary_key=True)
+    course_id = models.CharField(max_length=256, primary_key=True)
     name = models.CharField(max_length=128, null=True)
     credit = models.IntegerField(blank=False)
     main_class = models.IntegerField(default=1)
