@@ -348,11 +348,10 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
 
 
 @csrf_exempt
-def courseinfo(request: HttpRequest, course_id: str = ''):
+def courseDetail(request: HttpRequest, course_id: str = ''):
     if request.method == 'GET':
         try:
             course = Course.objects.get(course_id=course_id)
-
             def get_time_json(course):
                 times = course.times.all()
                 json = {}
@@ -380,13 +379,7 @@ def courseinfo(request: HttpRequest, course_id: str = ''):
                 "name_eng": course.name_eng,
                 "prerequisite": course.prerequisite,
                 "detail": course.detail,
-                "election": {
-                    "status": 0,    # TODO: needed?
-                    "willingpoint": 99,
-                    "elected_num": course.elect_num,
-                    "capacity": course.capacity,
-                    "pending_num": course.elect_newround_num
-                }
+                "capacity": course.capacity,
             }
             return JsonResponse(course_json)
         except:

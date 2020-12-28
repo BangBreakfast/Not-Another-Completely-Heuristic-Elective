@@ -174,7 +174,7 @@ def pushMessage(uid: str):
         uSet = User.objects.filter(username=uid)
         u = uSet.get()
         curTime = timezone.make_aware(datetime.now())
-        msg = Message.objects.create(genTime=curTime, content=msgStr, hasRead=False)
+        msg = Message.objects.create(title='抽签结果', genTime=curTime, content=msgStr, hasRead=False)
         msg.save()
         u.messages.add(msg)
         u.save()

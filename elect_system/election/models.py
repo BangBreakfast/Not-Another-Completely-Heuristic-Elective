@@ -9,8 +9,8 @@ import django.contrib.auth.models
 
 
 class Election(models.Model):
-    stu = models.ForeignKey(User, on_delete=models.CASCADE, null=False)
-    crs = models.ForeignKey(Course, on_delete=models.CASCADE, null=False)
+    stu = models.ForeignKey(User, on_delete=models.PROTECT, null=False)
+    crs = models.ForeignKey(Course, on_delete=models.PROTECT, null=False)
     willingpoint = models.IntegerField(default=0)
     credit = models.IntegerField(null=True)
     status = models.IntegerField(default=0)

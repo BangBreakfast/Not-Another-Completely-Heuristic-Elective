@@ -135,21 +135,36 @@ def test(request: HttpRequest):
 
 @csrf_exempt
 def password(request: HttpRequest, uid: str = ''):
-    if request.method == 'GET':  # Get verification code to change passwd
+    # Get verification code to change passwd
+    if request.method == 'GET':
         if uid is None:
             return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
-        if not User.objects.filter(username=uid).exists():
+
+        uSet = User.objects.filter(username=uid)
+        if not uSet.exists():
+            logging.error(
+                'User changing passwd does not exist: {}'.format(uid))
             return JsonResponse({
                 'success': False,
                 'msg': ERR_TYPE.AUTH_FAIL,
             })
 
+        if uSet.count() > 1:
+            logging.error('Duplicate username: {}'.format(uid))
+            return JsonResponse({'success': False, 'msg': ERR_TYPE.UNKNOWN})
+
+        u = uSet.get()
+
         uemail = uid + '@pku.edu.cn'  # uemail means 'user email'
-        code = VerificationCode.getVerificationCode(uemail)
-        send_mail('Verification code of PKU elective', str(code),
-                  'pku_elective@163.com', [uemail])
+        code = VerificationCode.getVerificationCode(u)
+        title = 'PKU elective verification code'
+        content = 'Hello ' + uid + ', your verification code: ' + str(code)
+        officialEmail = 'pku_elective@163.com'
+        send_mail(title, content, officialEmail, [uemail])
         return JsonResponse({'success': True})
-    elif request.method == 'POST':  # Verification code
+
+    # Edit password with verification code
+    elif request.method == 'POST':
         reqData = {}
         try:
             reqData = json.loads(request.body.decode())
@@ -161,25 +176,34 @@ def password(request: HttpRequest, uid: str = ''):
         vcode = reqData.get('vcode')
         if uid is None or passwd is None or vcode is None:
             return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
-        uemail = uid + '@pku.edu.cn'
 
-        if not VerificationCode.objects.filter(email=uemail).exists():
+        vSet = VerificationCode.objects.filter(user__username=uid)
+        if not vSet.exists():
+            logging.error(
+                'User changing passwd doesn\'t have vcode: {}'.format(uid))
             return JsonResponse({
                 'success': False,
                 'msg': ERR_TYPE.AUTH_FAIL,
             })
-        v = VerificationCode.objects.get(email=uemail)
+
+        v = vSet.get()
+
+        # Vcode error
         if v.code != str(vcode):
+            logging.error(
+                'User changing passwd with wrong vcode: uid={}, got_vcode={}'.format(uid, vcode))
             return JsonResponse({
                 'success': False,
                 'msg': ERR_TYPE.AUTH_FAIL,
             })
-        VerificationCode.objects.filter(email=uemail).delete()
-        u = User.objects.get(username=uid)
-        u.set_password(passwd)
-        u.save()
+
+        v.user.set_password(passwd)
+        v.user.save()
+        v.delete()
         return JsonResponse({'success': True})
+
     else:
+        logging.error(ERR_TYPE.INVALID_METHOD)
         return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
 
 
@@ -425,15 +449,19 @@ def message(request: HttpRequest, mid=''):
         u = uSet.get()
         msgList = []
         userMsgSet = u.messages.all()
+        unReadCnt = 0
         for msg in userMsgSet:
             msgDict = {
                 'id': msg.id,
                 'time': int(msg.genTime.timestamp())*1000,
+                'title': msg.title,
                 'content': msg.content,
                 'hasRead': msg.hasRead
             }
             msgList.append(msgDict)
-        return JsonResponse({'success': True, 'messages': msgList})
+            if not msg.hasRead:
+                unReadCnt += 1
+        return JsonResponse({'success': True, 'unReadNum': unReadCnt, 'messages': msgList})
 
     else:
         logging.error(ERR_TYPE.INVALID_METHOD)
