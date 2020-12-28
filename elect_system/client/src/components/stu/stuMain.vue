@@ -50,7 +50,7 @@ export default {
     return {tableData: Data}
   },
   mounted () {
-    axios.get('http://39.98.75.17:8000/phase/phases').then(response => (this.Data = response))
+    axios.get('http://39.98.75.17:8000/phase/phases').then(response => (this.tableData = response.data.data))
       .catch(function (error) { // 请求失败处理
         console.log(error)
       })

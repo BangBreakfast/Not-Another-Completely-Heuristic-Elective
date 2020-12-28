@@ -131,12 +131,11 @@
         </el-table>
         <el-pagination
             background
-            layout="total, sizes, prev, pager, next, jumper"
+            layout="total, prev, pager, next, jumper"
             :total="this.courseList.length"
             @current-change="handleCurrentChange"
             @size-change="handleSizeChange"
             :current-page="currentPage"
-            :page-sizes="[5, 10, 20, 40]"
             :page-size="pagesize"
             >
         </el-pagination>
@@ -162,7 +161,7 @@ export default {
       department: ['信科', '不是信科'],
       currentPage: 1,
       // 初始页
-      pagesize: 10,
+      pagesize: 5,
       // 每页的数据
       courseList: [
         {
@@ -222,8 +221,8 @@ export default {
   },
   mounted () {
     this.OnSearch = false
-    axios.get('http://39.98.75.17:8000/courses/depts', {withCredentials: true}).then(response => {
-      this.department = response.departments
+    axios.get('http://39.98.75.17:8000/course/depts', {withCredentials: true}).then(response => {
+      this.department = response.data.data
     })
   },
   methods: {

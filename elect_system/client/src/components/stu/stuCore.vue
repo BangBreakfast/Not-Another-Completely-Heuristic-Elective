@@ -62,23 +62,23 @@ export default {
         }]
     }
   },
-  methods: {
-    mounted () {
-      if (getCookie('username').substring(0, 3) !== 'stu') {
-        alert('学生登录失效')
-        this.$router.push('/stuLogin')
+  mounted () {
+    // if (getCookie('username').substring(0, 3) !== 'stu') {
+    //   alert('学生登录失效')
+    //   this.$router.push('/stuLogin')
+    // }
+    axios.get('http://39.98.75.17:8000/user/message', {withCredentials: true}).then((res) => {
+      return res.data
+    }).then(data => {
+      if (data.success !== true) {
+        alert('获取消息失败')
+      } else {
+        this.messages = data.messages
+        this.infonum = data.unReadNum
       }
-      axios.get('http://39.98.75.17:8000/user/login', {withCredentials: true}).then((res) => {
-        return res.data
-      }).then(data => {
-        if (data.success !== true) {
-          alert('获取消息失败')
-        } else {
-          this.messages = data.messages
-          this.infonum = data.unReadNum
-        }
-      })
-    },
+    })
+  },
+  methods: {
     logout () {
       axios.post('http://39.98.75.17:8000/user/logout', {withCredentials: true}).then((res) => {
         delCookie('username')
