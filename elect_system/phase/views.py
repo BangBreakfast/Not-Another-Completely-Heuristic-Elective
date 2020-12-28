@@ -4,7 +4,7 @@ import logging
 from threading import Lock
 from django.http.request import HttpRequest
 from django.http.response import JsonResponse
-from .models import Phase, electionOpen, sch, phaseTheme
+from .models import Phase, electionOpen, sch
 from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime
 from django.utils import timezone
@@ -29,10 +29,11 @@ def phases_new(request: HttpRequest, phid: str = ''):
         retList = []
         jobList = sch.get_jobs()
         for job in jobList:
+            logging.info(job.id)
             jobDict = {
                 'id': job.id,
-                'theme': phaseTheme[job.id],
-                'detail': '',
+                'theme': '抽签',
+                'detail': '抽签通常在十分钟之内完成，抽签期间无法选课',
                 'is_open': False,
                 'start_time': job.trigger.run_date,
                 'end_time': job.trigger.run_date,
@@ -108,7 +109,6 @@ def phases_new(request: HttpRequest, phid: str = ''):
 
             newBallot = sch.add_job(
                 fairBallot, trigger='date', run_date=startDateTime)
-            phaseTheme[newBallot.id] = phTheme
 
         return JsonResponse({'success': True})
 
@@ -120,9 +120,11 @@ def phases_new(request: HttpRequest, phid: str = ''):
                 'success': False,
                 'msg': ERR_TYPE.NOT_ALLOWED,
             })
+        logging.debug(phid)
         job = sch.get_job(phid)
         if job is not None:
             job.remove()
+            logging.debug('Job {} removed'.format(phid))
         return JsonResponse({'success': True})
     else:
         return JsonResponse({'success': False, 'msg': 'Invalid method'})

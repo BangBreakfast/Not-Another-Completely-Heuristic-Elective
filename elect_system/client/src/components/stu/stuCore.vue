@@ -8,6 +8,7 @@
                 <el-menu-item index="4"><el-link :underline="false" href='\stuProgram'>培养方案</el-link></el-menu-item>
           </el-menu>
       </el-row>
+            <el-badge class='divcss5-c'><el-button type="text" size="small" disabled>当前用户:{{username}}</el-button></el-badge>
             <el-badge class='divcss5-a'>
               <el-button size="small" type="info" v-on:click="logout()">登出</el-button>
             </el-badge>
@@ -23,7 +24,9 @@
                     <el-table-column width="150" label="消息标题" property="title"></el-table-column>
                     <el-table-column width="450" label="消息时间" property="time">
                       <template slot-scope="scope">
-                          <el-button type="text" @click="noteread(scope.$index)">{{new Date(scope.row.time)}}</el-button>
+                          <el-button type="text" @click="noteread(scope.$index)">
+                            {{new Date(scope.row.time).getFullYear()+'-'+(new Date(scope.row.time).getMonth()+1)+'-'+new Date(scope.row.time).getDate()+' '+new Date(scope.row.time).getHours()+':'+new Date(scope.row.time).getMinutes()+':'+new Date(scope.row.time).getSeconds()}}
+                          </el-button>
                       </template>
                     </el-table-column>
                   </el-table>
@@ -38,7 +41,8 @@ import axios from 'axios'
 import {getCookie,delCookie} from '../../assets/js/cookies.js'
 export default {
   data () {
-    let res = 1
+    let curusername = getCookie('username').substring(3)
+    let res = 0
     if (this.$route.path === '/stuMain') {
       res = 1
     } else if (this.$route.path === '/stuPersonal') {
@@ -49,8 +53,9 @@ export default {
       res = 4
     }
     return {
+      username: curusername,
       infonum: 1,
-      hidden: (this.infonum <= 0),
+      hidden: 0,
       activeIndex: res.toString(),
       messages: [
         {
@@ -63,10 +68,10 @@ export default {
     }
   },
   mounted () {
-    // if (getCookie('username').substring(0, 3) !== 'stu') {
-    //   alert('学生登录失效')
-    //   this.$router.push('/stuLogin')
-    // }
+    if (getCookie('username').substring(0, 3) !== 'stu') {
+      alert('学生登录失效')
+      this.$router.push('/stuLogin')
+    }
     axios.get('http://39.98.75.17:8000/user/message', {withCredentials: true}).then((res) => {
       return res.data
     }).then(data => {
@@ -75,6 +80,7 @@ export default {
       } else {
         this.messages = data.messages
         this.infonum = data.unReadNum
+        this.hidden = (this.infonum <= 0)
       }
     })
   },
@@ -89,19 +95,20 @@ export default {
       let message = this.messages[index]
       this.$alert(message.content)
       if (message.hasRead === false) {
-        axios.post('http://39.98.75.17:8000/user/message' + message.id.toString(), {withCredentials: true}).then((res) => {
+        axios.post('http://39.98.75.17:8000/user/message/' + message.id.toString(),'', {withCredentials: true}).then((res) => {
         })
         this.messages[index].hasRead = true
         this.infonum--
         this.hidden = (this.infonum <= 0)
       }
       console.log(this.hidden)
-    }
+    },
   }
 }
 </script>
 <style scoped>
 .divcss5-a{position:absolute;right:40px;top:20px}
 .divcss5-b{position:absolute;right:120px;top:20px}
+.divcss5-c{position:absolute;right:200px;top:20px}
 .el-menu-demo{margin-left:30px;margin-right:30px}
 </style>

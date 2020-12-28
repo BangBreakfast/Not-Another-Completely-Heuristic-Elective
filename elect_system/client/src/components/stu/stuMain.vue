@@ -8,10 +8,10 @@
         :data="tableData"
         border
         style="width: 100%">
-        <el-table-column width="450" label="消息时间">
+        <el-table-column width="450" label="时间">
           <template slot-scope="scope">
-              开始时间：{{new Date(scope.row.start_time)}}
-              截止时间：{{new Date(scope.row.end_time)}}
+              开始时间：
+              {{new Date(scope.row.start_time).getFullYear()+'-'+(new Date(scope.row.start_time).getMonth()+1)+'-'+new Date(scope.row.start_time).getDate()+' '+new Date(scope.row.start_time).getHours()+':'+new Date(scope.row.start_time).getMinutes()+':'+new Date(scope.row.start_time).getSeconds()}}
           </template>
         </el-table-column>
         <el-table-column

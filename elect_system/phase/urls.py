@@ -7,6 +7,6 @@ urlpatterns = [
 	# path('phases', views.phases),
 	# re_path(r'phases/(\d){0,}', views.phases),
 	path('phases', views.phases_new),
-	re_path(r'phases/(\d){0,}', views.phases_new),
+	re_path(r'phases/(\w{0,})', views.phases_new),
 	# path('current', views.current),
 ]
