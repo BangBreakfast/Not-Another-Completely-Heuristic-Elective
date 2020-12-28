@@ -59,7 +59,7 @@ export default {
           'time': 1600012345000,
           'content': '抽签已结束，您成功选中的课程：xxx、yyy，未选中的课程：yyy',
           'hasRead': false
-        },]
+        }]
     }
   },
   methods: {
@@ -68,7 +68,7 @@ export default {
         alert('学生登录失效')
         this.$router.push('/stuLogin')
       }
-      axios.get('http://localhost:8000/user/login', {withCredentials: true}).then((res) => {
+      axios.get('http://39.98.75.17:8000/user/login', {withCredentials: true}).then((res) => {
         return res.data
       }).then(data => {
         if (data.success !== true) {
@@ -80,7 +80,7 @@ export default {
       })
     },
     logout () {
-      axios.post('http://localhost:8000/user/logout', {withCredentials: true}).then((res) => {
+      axios.post('http://39.98.75.17:8000/user/logout', {withCredentials: true}).then((res) => {
         delCookie('username')
         this.$router.push('/stuLogin')
       })
@@ -89,7 +89,7 @@ export default {
       let message = this.messages[index]
       this.$alert(message.content)
       if (message.hasRead === false) {
-        axios.post('http://localhost:8000/user/message' + message.id.toString(), {withCredentials: true}).then((res) => {
+        axios.post('http://39.98.75.17:8000/user/message' + message.id.toString(), {withCredentials: true}).then((res) => {
         })
         this.messages[index].hasRead = true
         this.infonum--

@@ -60,7 +60,7 @@ export default {
         alert('请输入用户名或密码')
       } else {
         /* 接口请求 */
-        axios.post('http://localhost:8000/user/students', {students: [this.form]}, {withCredentials: true}).then((res) => {
+        axios.post('http://39.98.75.17:8000/user/students', {students: [this.form]}, {withCredentials: true}).then((res) => {
           console.log(res)
           res = res.data
           // cookie = res.headers

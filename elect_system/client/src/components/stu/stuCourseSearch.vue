@@ -15,7 +15,7 @@
          <el-col span="4">
             <el-form-item label="课程院系" prop="dept">
                 <el-select v-model="formInline.dept" placeholder="院系名称">
-                <el-option v-for=" (name,nameIndex) in this.department" :key="nameIndex" :label="name" :value="name"></el-option>
+                <el-option v-for=" (name,nameIndex) in this.department" :key="nameIndex" :label="name.name" :value="name.id"></el-option>
                 </el-select>
             </el-form-item>
          </el-col>
@@ -222,7 +222,9 @@ export default {
   },
   mounted () {
     this.OnSearch = false
-    // axios.get('http://localhost:8000/depts', {withCredentials: true}).then(response => (this.department = response.department))
+    axios.get('http://39.98.75.17:8000/courses/depts', {withCredentials: true}).then(response => {
+      this.department = response.departments
+    })
   },
   methods: {
     onSubmit () {
@@ -250,9 +252,10 @@ export default {
       if (mainclass === '-1') {
         mainclass = ''
       }
-      axios.get('http://localhost:8000/course/courses?id=' + this.formInline.id +
+      axios.get('http://39.98.75.17:8000/course/courses?id=' + this.formInline.id +
           '&period=' + period + '&day=' + day + '&name=' + this.formInline.name +
-          '&main_class=' + mainclass + '&sub_class=' + this.formInline.Subclass, {withCredentials: true}).then(response => {
+          '&main_class=' + mainclass + '&sub_class=' + this.formInline.Subclass +
+          '&dept=' + this.formInline.dept, {withCredentials: true}).then(response => {
         return response.data
       }).then(data => {
         this.courseList = data.course_list
@@ -291,7 +294,7 @@ export default {
       }
     },
     handleClick (row, type) {
-      axios.post('http://localhost:8000/election/elect',
+      axios.post('http://39.98.75.17:8000/election/elect',
         {'course_id': this.courseList[(this.currentPage - 1) * this.pagesize + row],
           'willingpoint': Number(this.courseList[(this.currentPage - 1) * this.pagesize + row].election.willpoint),
           'type': type},

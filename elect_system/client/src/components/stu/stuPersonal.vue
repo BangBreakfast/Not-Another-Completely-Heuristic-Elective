@@ -159,7 +159,7 @@ export default {
   mounted () {
     let username = getCookie('username').substring(3)
     // console.log(getCookie('username'))
-    axios.get('http://localhost:8000/election/schedule/' + username, {withCredentials: true}).then(response => {
+    axios.get('http://39.98.75.17:8000/election/schedule/' + username, {withCredentials: true}).then(response => {
       return response.data
     }).then(data => {
       if (data.success === true) {
@@ -207,13 +207,13 @@ export default {
       return identifier === 'week' && (num === 6) ? '日' : character[num]
     },
     modify (courseIndex, lessonIndex) {
-      axios.post('http://localhost:8000/election/elect', {'course_id': this.classTableData.id[courseIndex][lessonIndex], 'willingpoint': Number(this.classTableData.willing[courseIndex][lessonIndex]), 'type': 1}, {withCredentials: true}).then(response => (this.$router.go(0)))
+      axios.post('http://39.98.75.17:8000/election/elect', {'course_id': this.classTableData.id[courseIndex][lessonIndex], 'willingpoint': Number(this.classTableData.willing[courseIndex][lessonIndex]), 'type': 1}, {withCredentials: true}).then(response => (this.$router.go(0)))
     },
     remove (courseIndex, lessonIndex) {
-      axios.post('http://localhost:8000/election/elect', {'course_id': this.classTableData.id[courseIndex][lessonIndex], 'willingpoint': Number(this.classTableData.willing[courseIndex][lessonIndex]), 'type': 2}, {withCredentials: true}).then(response => (this.$router.go(0)))
+      axios.post('http://39.98.75.17:8000/election/elect', {'course_id': this.classTableData.id[courseIndex][lessonIndex], 'willingpoint': Number(this.classTableData.willing[courseIndex][lessonIndex]), 'type': 2}, {withCredentials: true}).then(response => (this.$router.go(0)))
     },
     drop (courseIndex, lessonIndex) {
-      axios.post('http://localhost:8000/election/elect', {'course_id': this.classTableData.id[courseIndex][lessonIndex], 'willingpoint': Number(this.classTableData.willing[courseIndex][lessonIndex]), 'type': 3}, {withCredentials: true}).then(response => (this.$router.go(0)))
+      axios.post('http://39.98.75.17:8000/election/elect', {'course_id': this.classTableData.id[courseIndex][lessonIndex], 'willingpoint': Number(this.classTableData.willing[courseIndex][lessonIndex]), 'type': 3}, {withCredentials: true}).then(response => (this.$router.go(0)))
     }
   }
 }

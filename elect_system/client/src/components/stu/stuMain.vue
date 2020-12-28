@@ -8,10 +8,11 @@
         :data="tableData"
         border
         style="width: 100%">
-        <el-table-column
-          prop="date"
-          label="时间类型"
-          width="180">
+        <el-table-column width="450" label="消息时间">
+          <template slot-scope="scope">
+              开始时间：{{new Date(scope.row.start_time)}}
+              截止时间：{{new Date(scope.row.end_time)}}
+          </template>
         </el-table-column>
         <el-table-column
           prop="theme"
@@ -49,7 +50,7 @@ export default {
     return {tableData: Data}
   },
   mounted () {
-    axios.get('http://localhost:8000/phase/phases').then(response => (this.Data = response))
+    axios.get('http://39.98.75.17:8000/phase/phases').then(response => (this.Data = response))
       .catch(function (error) { // 请求失败处理
         console.log(error)
       })
