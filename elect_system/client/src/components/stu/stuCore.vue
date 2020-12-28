@@ -64,10 +64,10 @@ export default {
   },
   methods: {
     mounted () {
-    // if (getCookie('username').substring(0, 3) !== 'stu') {
-    //   alert('学生登录失效')
-    //   this.$router.push('/stuLogin')
-    // }
+      if (getCookie('username').substring(0, 3) !== 'stu') {
+        alert('学生登录失效')
+        this.$router.push('/stuLogin')
+      }
       axios.get('http://localhost:8000/user/login', {withCredentials: true}).then((res) => {
         return res.data
       }).then(data => {
