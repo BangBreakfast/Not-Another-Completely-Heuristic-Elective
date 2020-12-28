@@ -46,13 +46,6 @@
           </el-form-item>
         </el-col>
       </el-row>
-      <el-row justify="center" type="flex">
-        <el-col span="4">
-          <el-form-item label="课程ID" prop="course_id">
-            <el-input v-model.number="course.course_id"></el-input>
-          </el-form-item>
-        </el-col>
-      </el-row>
       <el-form-item>
         <el-button type="primary" @click="submitForm('course')">提交</el-button>
       </el-form-item>
@@ -61,6 +54,7 @@
 </template>
 
 <script>
+import axios from "axios";
 export default {
   mounted() {
     axios
@@ -113,9 +107,27 @@ export default {
         pos: [{ required: true, message: "请输入上课地点", trigger: "blur" }],
         times: {}
       },
+      lessons: [
+        "08:00-08:50",
+        "09:00-09:50",
+        "10:10-11:00",
+        "11:10-12:00",
+        "13:00-13:50",
+        "14:00-14:50",
+        "15:10-16:00",
+        "16:10-17:00",
+        "17:10-18:00",
+        "18:40-19:30",
+        "19:40-20:30",
+        "20:40-21:30"
+      ],
+      date: ["周一", "周二", "周三", "周四", "周五", "周六", "周日"],
       methods: {
         submitForm(formName) {
-          axios.post('http://localhost:8000/courses/' + this.$route.params.id, this.course, {withCredentials: true});
+          axios.post(
+            "http://localhost:8000/courses/" + this.$route.params.id,
+            this.course
+          );
         }
       }
     };
