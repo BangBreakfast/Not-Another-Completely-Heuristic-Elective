@@ -121,7 +121,7 @@ DATABASES = {
         'HOST': '127.0.0.1',
         'PORT': '3306',
         'USER': 'root',
-        'PASSWORD': 'jiangyan',
+        'PASSWORD': 'zzzzzz',
         'TEST': {
             'CHARSET': 'utf8',
             'COLLATION': 'utf8_general_ci'
@@ -221,7 +221,7 @@ EMAIL_HOST = 'smtp.163.com'
 EMAIL_PORT = 25
 EMAIL_USE_TLS = False
 EMAIL_HOST_USER = 'pku_elective@163.com'
-EMAIL_HOST_PASSWORD = 'SEKJWOHPKSROJKMV'
+EMAIL_HOST_PASSWORD = 'xxxxxxxx'
 
 DEFAULT_CHARSET = 'utf-8'
 
