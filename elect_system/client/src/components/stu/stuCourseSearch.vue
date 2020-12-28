@@ -89,7 +89,7 @@
                 </el-row>
                 <el-row v-if="courseList[(currentPage-1)*pagesize+scope.$index].election.status===2" type="flex" gutter="20" justify="left">
                     <el-col :span="6">
-                        <el-input v-model="courseList[(currentPage-1)*pagesize+scope.$index].election.willpoint" placeholder="意愿点" size="mini" width="100"></el-input>
+                        <el-input v-model="courseList[(currentPage-1)*pagesize+scope.$index].election.willingpoint" placeholder="意愿点" size="mini" width="100"></el-input>
                     </el-col>
                     <el-col :span="4">
                         <el-button @click="handleClick(scope.$index,1)" type="primary" size="mini">修改</el-button>
@@ -110,7 +110,7 @@
                 </el-row>
                 <el-row v-if="courseList[(currentPage-1)*pagesize+scope.$index].election.status===1" type="flex" gutter="20" justify="left">
                     <el-col :span="6">
-                        <el-input v-model="courseList[(currentPage-1)*pagesize+scope.$index].election.willpoint" :disabled="true" placeholder="意愿点" size="mini" width="100"></el-input>
+                        <el-input v-model="courseList[(currentPage-1)*pagesize+scope.$index].election.willingpoint" :disabled="true" placeholder="意愿点" size="mini" width="100"></el-input>
                     </el-col>
                     <el-col :span="4">
                         <el-popover placement="bottom"
@@ -294,10 +294,17 @@ export default {
     },
     handleClick (row, type) {
       axios.post('http://39.98.75.17:8000/election/elect',
-        {'course_id': this.courseList[(this.currentPage - 1) * this.pagesize + row],
+        {'course_id': this.courseList[(this.currentPage - 1) * this.pagesize + row].course_id,
           'willingpoint': Number(this.courseList[(this.currentPage - 1) * this.pagesize + row].election.willpoint),
           'type': type},
-        {withCredentials: true}).then(this.$router.go(0))
+        {withCredentials: true}).then(response => {
+          if (response.data.success) {
+            alert('操作成功')
+            this.$router.go(0)
+          } else {
+            alert(response.data.msg)
+          }
+        })
     },
     handleCurrentChange (currentPage) {
       this.currentPage = currentPage

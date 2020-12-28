@@ -95,9 +95,9 @@
 import axios from 'axios'
 export default {
   mounted () {
-    axios.get('http://39.98.75.17:8000/course/depts/', {withCredentials: true}).then(response => (this.dept = response.data.data))
+    axios.get('http://39.98.75.17:8000/course/depts', {withCredentials: true}).then(response => (this.dept = response.data.data))
     axios.get('http://39.98.75.17:8000/course/courses/' + this.$route.params.id + '/detail', {withCredentials: true}).then(response => {
-      this.course = response.data.course_list[0]
+      this.course = response.data
       for (let i = 0; i < this.depts.length; ++i) {
         if (this.depts[i].id === this.course.dept) {
           this.course.dept = this.depts[i].name

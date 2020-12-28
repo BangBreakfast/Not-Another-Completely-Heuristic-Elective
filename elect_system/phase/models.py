@@ -30,5 +30,4 @@ class Phase(models.Model):
 
 
 sch = BackgroundScheduler()
-phaseTheme = {}
 electionOpen = True

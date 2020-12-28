@@ -180,8 +180,8 @@ export default {
               this.classTableData.id[day][period] = course.course_id.toString()
               this.classTableData.courses[day][period] = course.course_id.toString() + ':' + course.name
               this.classTableData.details[day][period] = '学分:' + course.credit
-              this.classTableData.details[day][period] = this.classTableData.details[day][period] + '\n讲师' + course.lecturer
-              this.classTableData.details[day][period] = this.classTableData.details[day][period] + '\n教室' + course.pos
+              this.classTableData.details[day][period] = this.classTableData.details[day][period] + '\n讲师:' + course.lecturer
+              this.classTableData.details[day][period] = this.classTableData.details[day][period] + '\n教室:' + course.pos
               this.classTableData.willing[day][period] = course.election.willingpoint
               this.classTableData.election_status[day][period] = course.election.status
               this.classTableData.election_detail[day][period] = '已选人数:' + course.election.elected_num.toString() + '\n课程容量' + course.election.capacity.toString() + '\n待抽签人数' + course.election.pending_num.toString()
@@ -207,13 +207,37 @@ export default {
       return identifier === 'week' && (num === 6) ? '日' : character[num]
     },
     modify (courseIndex, lessonIndex) {
-      axios.post('http://39.98.75.17:8000/election/elect', {'course_id': this.classTableData.id[courseIndex][lessonIndex], 'willingpoint': Number(this.classTableData.willing[courseIndex][lessonIndex]), 'type': 1}, {withCredentials: true}).then(response => (this.$router.go(0)))
+      axios.post('http://39.98.75.17:8000/election/elect', {'course_id': this.classTableData.id[courseIndex][lessonIndex], 'willingpoint': Number(this.classTableData.willing[courseIndex][lessonIndex]), 'type': 1}, {withCredentials: true}).then(response => {
+        if (response.data.success) {
+          alert('操作成功')
+          this.$router.go(0)
+        } else {
+          alert(response.data.msg)
+        }
+        this.$router.go(0)
+      })
     },
     remove (courseIndex, lessonIndex) {
-      axios.post('http://39.98.75.17:8000/election/elect', {'course_id': this.classTableData.id[courseIndex][lessonIndex], 'willingpoint': Number(this.classTableData.willing[courseIndex][lessonIndex]), 'type': 2}, {withCredentials: true}).then(response => (this.$router.go(0)))
+      axios.post('http://39.98.75.17:8000/election/elect', {'course_id': this.classTableData.id[courseIndex][lessonIndex], 'willingpoint': Number(this.classTableData.willing[courseIndex][lessonIndex]), 'type': 2}, {withCredentials: true}).then(response => {
+        if (response.data.success) {
+          alert('操作成功')
+          this.$router.go(0)
+        } else {
+          alert(response.data.msg)
+        }
+        this.$router.go(0)
+      })
     },
     drop (courseIndex, lessonIndex) {
-      axios.post('http://39.98.75.17:8000/election/elect', {'course_id': this.classTableData.id[courseIndex][lessonIndex], 'willingpoint': Number(this.classTableData.willing[courseIndex][lessonIndex]), 'type': 3}, {withCredentials: true}).then(response => (this.$router.go(0)))
+      axios.post('http://39.98.75.17:8000/election/elect', {'course_id': this.classTableData.id[courseIndex][lessonIndex], 'willingpoint': Number(this.classTableData.willing[courseIndex][lessonIndex]), 'type': 3}, {withCredentials: true}).then(response => {
+        if (response.data.success) {
+          alert('操作成功')
+          this.$router.go(0)
+        } else {
+          alert(response.data.msg)
+        }
+        this.$router.go(0)
+      })
     }
   }
 }
@@ -256,7 +280,6 @@ export default {
                 text-align: center;
                 .willpoint{
                 color: #555;
-                font-size:  5px;
                 padding: 15px 15px auto;
             }
             }
@@ -269,7 +292,6 @@ export default {
             }
             .willpoint{
                 color: #555;
-                font-size:  px;
                 padding: 15px 15px auto;
             }
             .coursename{

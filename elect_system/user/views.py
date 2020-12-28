@@ -401,6 +401,7 @@ def students(request: HttpRequest, uid: str = ''):
 
 @csrf_exempt
 def message(request: HttpRequest, mid=''):
+    logging.debug(request.user.username)
     if not request.user.is_authenticated:
         logging.error('Anonymous user cannot get messages')
         return JsonResponse({
