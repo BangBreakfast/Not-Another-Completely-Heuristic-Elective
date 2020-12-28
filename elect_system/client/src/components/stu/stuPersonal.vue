@@ -24,7 +24,7 @@
                             </td>
 
                             <td v-for="(course, courseIndex) in classTableData.courses" :key="courseIndex">
-                                <el-row class="coursename">{{classTableData.courses[courseIndex][lessonIndex]|| '-'}}</el-row>
+                                <el-link type="primary" :href="'stuCourseDetail/'+classTableData.id[courseIndex][lessonIndex]">{{classTableData.courses[courseIndex][lessonIndex]|| '-'}}</el-link>
                                 <el-row v-if="classTableData.courses[courseIndex][lessonIndex]!=='' && classTableData.election_status[courseIndex][lessonIndex]==2">
                                     <el-col v-if="classTableData.courses[courseIndex][lessonIndex]!==''">
                                         <span class="willpoint">意愿点：</span>

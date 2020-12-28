@@ -34,6 +34,7 @@ export default {
   },
   mounted () {
     if (getCookie('username').substring(0, 5) !== 'admin') {
+      alert('教务登录失效')
       this.$router.push('/adminLogin')
     }
   }

@@ -55,7 +55,7 @@ export default {
   data () {
     return {
       course: {
-        'course_id': 1233343,
+        'course_id': '1233343',
         'name': '软件工程',
         'credit': 4,
         "main_class": 1,

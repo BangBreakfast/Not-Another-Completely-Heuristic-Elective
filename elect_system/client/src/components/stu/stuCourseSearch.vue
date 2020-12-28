@@ -78,7 +78,7 @@
             <el-table-column label="选课状态" prop="state" width="180"></el-table-column>
             <el-table-column label="选课操作" fixed="right">
              <template slot-scope="scope">
-                <el-row><el-link :href="'stuCourseDetail/'+courseList[(currentPage-1)*pagesize+scope.$index].course_id">详细信息</el-link></el-row>
+                <el-row><el-link type="primary" :href="'stuCourseDetail/'+courseList[(currentPage-1)*pagesize+scope.$index].course_id">详细信息</el-link></el-row>
                 <el-row v-if="courseList[(currentPage-1)*pagesize+scope.$index].election.status===0" type="flex" gutter="20" justify="left">
                     <el-col :span="6">
                         <el-input v-model="courseList[(currentPage-1)*pagesize+scope.$index].election.willpoint" placeholder="意愿点" size="mini" width="100"></el-input>
@@ -292,7 +292,7 @@ export default {
     },
     handleClick (row, type) {
       axios.post('http://localhost:8000/election/elect',
-        {'course_id': this.courseList[(this.currentPage - 1) * this.pagesize + row].course_id,
+        {'course_id': this.courseList[(this.currentPage - 1) * this.pagesize + row],
           'willingpoint': Number(this.courseList[(this.currentPage - 1) * this.pagesize + row].election.willpoint),
           'type': type},
         {withCredentials: true}).then(this.$router.go(0))

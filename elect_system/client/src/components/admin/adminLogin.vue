@@ -1,20 +1,20 @@
 <template>
   <div>
+    <span>{{success}}</span>
     <el-form ref="loginForm" :model="form" :rules="rules" label-width="80px" class="login-box">
       <h2 class="login-title">教务登录系统</h2>
       <h3 class="login-title">欢迎登录</h3>
-      <el-form-item label="账号" prop="username">
-        <el-input type="text" placeholder="请输入账号" v-model="form.username"/>
+      <el-form-item label="账号" prop="uid">
+        <el-input type="text" placeholder="请输入账号" v-model="form.uid"/>
       </el-form-item>
       <el-form-item label="密码" prop="password">
         <el-input type="password" placeholder="请输入密码" v-model="form.password"/>
       </el-form-item>
       <el-form-item>
         <el-button v-on:click="link()">切换到学生系统</el-button>
-        <el-button type="primary" v-on:click="adminLogin()">登录</el-button>
+        <el-button type="primary" v-on:click="stuLogin()">登录</el-button>
       </el-form-item>
     </el-form>
-
     <el-dialog
       title="温馨提示"
       :visible.sync="showTishi"
@@ -34,43 +34,47 @@ import axios from 'axios'
 export default {
   name: 'Login',
   mounted () {
-    /* 页面挂载获取cookie，如果存在username的cookie，则跳转到主页，不需登录 */
-    if (getCookie('username').substring(0, 5) === 'admin') {
-      this.$router.push('/adminMain')
+    if (getCookie('username').substring(0, 3) === 'stu') {
+      this.$router.push('/stuMain')
     }
   },
   data () {
     return {
       form: {
-        username: '',
+        uid: '',
         password: ''
       },
       rules: {
-        username: [
+        uid: [
           {required: true, message: '账号不可为空', trigger: 'blur'}
         ],
         password: [
           {required: true, message: '密码不可为空', trigger: 'blur'}
         ]
       },
-      dialogVisible: false
+      tishi: '',
+      showTishi: false,
+      success: ''
     }
   },
   methods: {
-    adminLogin () {
-      if (this.username === '' || this.password === '') {
+    stuLogin () {
+      if (this.uid === '' || this.password === '') {
         alert('请输入用户名或密码')
       } else {
         /* 接口请求 */
-        axios.post('http://localhost:8000/admin/Login', this.form, {withCredentials: true}).then((res) => {
+        axios.post('http://localhost:8000/user/login', this.form, {withCredentials: true}).then((res) => {
           console.log(res)
+          res = res.data
+          // cookie = res.headers
           if (res.success === false) {
             this.tishi = '该用户不存在或者密码错误'
             this.showTishi = true
           } else if (res.success === true) {
+            this.success = 'true'
             this.tishi = '登录成功'
             this.showTishi = true
-            setCookie('username', 'admin' + this.username, 1000 * 60)
+            setCookie('username', 'admin' + this.form.uid, 1000 * 60)
             setTimeout(function () {
               this.$router.push('/adminMain')
             }.bind(this), 1000)
