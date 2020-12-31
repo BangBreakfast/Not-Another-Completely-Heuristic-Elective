@@ -212,6 +212,8 @@ export default {
       ],
       Mainclass: [
         '专业课',
+        '专业限选',
+        '专业任选',
         '政治课',
         '体育课',
         '英语课',
@@ -310,11 +312,11 @@ export default {
       this.currentPage = currentPage
       console.log(this.currentPage)
       for (let i = (currentPage - 1) * this.pagesize; i < currentPage * this.pagesize && i < this.courseList.length; i++) {
-        this.courseList[i]['time'] = ''
-        for (let curTime in this.courseList[i].times) {
-          this.courseList[i].time += this.date[curTime.day - 1]
-          for (let period in curTime.period) {
-            this.courseList[i].time += this.lessons[period - 1] + ','
+        this.$set(this.courseList[i], 'time', '')
+        for (let j = 0; j < this.courseList[i].times.length; ++j) {
+          this.courseList[i].time += this.date[this.courseList[i].times[j].day - 1]
+          for (let k = 0; k < this.courseList[i].times[j].period.length; ++k) {
+            this.courseList[i].time += this.lessons[this.courseList[i].times[j].period[k] - 1] + ','
           }
           this.courseList[i].time += '\n'
         }
@@ -322,7 +324,7 @@ export default {
         let value = this.courseList[i].election.elected_num.toString() + '/' +
           this.courseList[i].election.capacity.toString() + ' 待抽签人数:' +
           this.courseList[i].election.pending_num.toString()
-        this.courseList[i][key] = value
+        this.$set(this.courseList[i], key, value)
       }
     }
   }

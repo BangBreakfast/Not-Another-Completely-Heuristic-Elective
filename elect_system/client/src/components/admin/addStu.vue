@@ -9,8 +9,7 @@
         <el-input type="password" placeholder="请输入密码" v-model="form.password"/>
       </el-form-item>
       <el-form-item>
-        <el-button v-on:click="link()">切换到教务系统</el-button>
-        <el-button type="primary" v-on:click="stuLogin()">登录</el-button>
+        <el-button type="primary" v-on:click="stuLogin()">添加</el-button>
       </el-form-item>
     </el-form>
     <el-dialog

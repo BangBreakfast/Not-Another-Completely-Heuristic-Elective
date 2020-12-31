@@ -1,6 +1,5 @@
 <template>
   <div>
-    <span>{{success}}</span>
     <el-form ref="loginForm" :model="form" :rules="rules" label-width="80px" class="login-box">
       <h2 class="login-title">教务登录系统</h2>
       <h3 class="login-title">欢迎登录</h3>
@@ -76,7 +75,7 @@ export default {
             this.showTishi = true
             setCookie('username', 'admin' + this.form.uid, 1000 * 60)
             setTimeout(function () {
-              this.$router.push('/adminMain')
+              this.$router.push('/stuLogin')
             }.bind(this), 1000)
           }
         })

@@ -1,6 +1,5 @@
 <template>
   <div>
-    <span>{{success}}</span>
     <el-form ref="loginForm" :model="form" :rules="rules" label-width="80px" class="login-box">
       <h2 class="login-title">学生登录系统</h2>
       <h3 class="login-title">欢迎登录</h3>
