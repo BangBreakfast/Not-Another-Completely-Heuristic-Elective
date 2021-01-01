@@ -22,7 +22,7 @@ def init():
 
 init()
 
-
+#返回关于选课的JsonResponse：coming soon
 @csrf_exempt
 def comingSoon(request: HttpRequest):
     response = {
@@ -30,7 +30,7 @@ def comingSoon(request: HttpRequest):
     }
     return JsonResponse(response)
 
-
+#从http请求中获取uid以及password
 def FetchIdAndPasswd(request: HttpRequest):
     reqData = {}
     try:
@@ -48,7 +48,7 @@ def FetchIdAndPasswd(request: HttpRequest):
         return None, None, ERR_TYPE.PARAM_ERR
     return uid, password, None
 
-
+#注册函数，要求请求类型为Post，先检查是否已经有同uid的用户存在，否则，创建该用户
 @csrf_exempt
 @DeprecationWarning
 def register(request: HttpRequest):
@@ -69,7 +69,7 @@ def register(request: HttpRequest):
 
     return JsonResponse({'success': True})
 
-
+#登录函数，要求请求类型为Post，使用验证模块进行登陆验证，验证成功后完成用户登录
 @csrf_exempt
 def login(request: HttpRequest):
     if request.method != 'POST':
@@ -97,7 +97,7 @@ def login(request: HttpRequest):
     auth.login(request, user)
     return JsonResponse({'success': True})
 
-
+#注销函数，同样要求请求格式为Post
 @csrf_exempt
 def logout(request: HttpRequest):
     if request.method == 'POST':
@@ -111,7 +111,7 @@ def logout(request: HttpRequest):
             "msg": ERR_TYPE.INVALID_METHOD,
         })
 
-
+#权限检测函数，用来判断当前用户为教务还是学生
 @csrf_exempt
 def test(request: HttpRequest):
     if request.user.is_authenticated:
@@ -132,10 +132,10 @@ def test(request: HttpRequest):
             'msg': 'Please login first',
         })
 
-
+#修改密码函数，用验证码的方式来完成密码的修改
 @csrf_exempt
 def password(request: HttpRequest, uid: str = ''):
-    # Get verification code to change passwd
+    # 获取验证码来进行密码的修改，请求方式为GET
     if request.method == 'GET':
         if uid is None:
             return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
@@ -163,7 +163,7 @@ def password(request: HttpRequest, uid: str = ''):
         send_mail(title, content, officialEmail, [uemail])
         return JsonResponse({'success': True})
 
-    # Edit password with verification code
+    # 使用验证码来完成密码的修改，请求方式为POST
     elif request.method == 'POST':
         reqData = {}
         try:
@@ -188,7 +188,7 @@ def password(request: HttpRequest, uid: str = ''):
 
         v = vSet.get()
 
-        # Vcode error
+        # 验证码错误
         if v.code != str(vcode):
             logging.error(
                 'User changing passwd with wrong vcode: uid={}, got_vcode={}'.format(uid, vcode))
@@ -207,10 +207,10 @@ def password(request: HttpRequest, uid: str = ''):
         return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
 
 
-# NOTE: In fact, both student accounts and dean accounts could be accessed by this method
+# NOTE: 事实上，学生帐户和教务帐户都可以通过这种方法访问
 @csrf_exempt
 def students(request: HttpRequest, uid: str = ''):
-    # Multiple users are created at a time
+    # 同时创建多个用户
     if request.method == 'POST':
         if not request.user.is_authenticated or not request.user.is_superuser:
             logging.warn('Unprivileged user try to create user, uid={}'.format(
@@ -281,7 +281,7 @@ def students(request: HttpRequest, uid: str = ''):
         return JsonResponse({'success': True})
 
     # Retrive user info
-    # Students cannot get user profile of others'
+    # 学生不能够查看其他学生的个人信息，教务可以获取学生的信息列表
     elif request.method == 'GET':
         if not request.user.is_authenticated or \
                 ((not request.user.is_superuser) and request.user.username != uid):
@@ -315,7 +315,7 @@ def students(request: HttpRequest, uid: str = ''):
             userList.append(userDict)
         return JsonResponse({'success': True, 'data': userList})
 
-    # Edit user info
+    # 编辑学生的个人信息，使用PUT的方式来传递参数（需要处理对不同信息的编辑处理请求）
     elif request.method == 'PUT':
         if not request.user.is_authenticated or not request.user.is_superuser:
             logging.warn('Unprivileged user try to edit user profile, uid={}'.format(
@@ -382,7 +382,7 @@ def students(request: HttpRequest, uid: str = ''):
         user.save()
         return JsonResponse({'success': True})
 
-    # Delete a user
+    # 删除一个用户
     elif request.method == 'DELETE':
         if not request.user.is_authenticated or not request.user.is_superuser:
             logging.warn('Unprivileged user try to delete user, uid={}'.format(
@@ -398,7 +398,7 @@ def students(request: HttpRequest, uid: str = ''):
     else:
         return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
 
-
+#发送信息函数
 @csrf_exempt
 def message(request: HttpRequest, mid=''):
     logging.debug(request.user.username)
@@ -409,7 +409,7 @@ def message(request: HttpRequest, mid=''):
             'msg': ERR_TYPE.NOT_ALLOWED,
         })
 
-    # Mark msg as read
+    # 将发送的信息标注为已经阅读
     if request.method == 'POST':
         # For dean, just return success
         if request.user.is_superuser:
@@ -439,10 +439,9 @@ def message(request: HttpRequest, mid=''):
             msg.save()
         return JsonResponse({'success': True})
 
-    # Get msg list
+    # 获取消息列表
     elif request.method == 'GET':
-        # Deans are not in User table, so no message box for them
-        # To simplify front end implementation, a empty msg list is returned.
+        # Note：由于教务和学生不是同一类用户，为了简化工作这里实际上没有为教务设计消息列表
         if request.user.is_superuser:
             return JsonResponse({'success': True, 'messages': []})
 
