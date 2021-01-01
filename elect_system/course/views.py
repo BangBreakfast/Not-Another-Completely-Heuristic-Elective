@@ -16,7 +16,7 @@ from django.db import IntegrityError
 def dept(request: HttpRequest):
     return JsonResponse({'success': True, 'data': DEPT})
 
-
+#展示所有课程的函数，要求请求格式为POST，且处于用户登陆的状态
 @csrf_exempt
 def show_all_course(request: HttpRequest):
     if not request.user.is_authenticated:
@@ -37,7 +37,7 @@ def show_all_course(request: HttpRequest):
 
     return JsonResponse({'success': True, 'msg': courseinfo_list, })
 
-
+#对于课程时间格式的验证函数，用来判断课程的时间段是否正确
 def check_time_format(times: list):
     for t in times:
         if not isinstance(t, dict):
@@ -53,7 +53,7 @@ def check_time_format(times: list):
                 return False    
     return True
 
-
+#将当前学生所选course列表中的课程时间进行统计汇总
 def get_time_json(course: Course):
     times = course.times.all()
     json = {}
@@ -69,7 +69,7 @@ def get_time_json(course: Course):
             }
     return [x for x in json.values()]
 
-
+#检验学生选课后是否发生时间冲突的函数
 def check_time(course, day, period):
     times = course.times.all()
     for time in times:
@@ -80,7 +80,7 @@ def check_time(course, day, period):
 
 @csrf_exempt
 def course(request: HttpRequest, crsIdInURL: str = ''):
-    # Add a new course
+    # 添加新的课程（可以是一个新课程的列表），要求添加请求为POST，并检查操作权限
     if request.method == 'POST':
         if not request.user.is_superuser:
             logging.error('user create course without privilege')
@@ -127,7 +127,7 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
                 logging.error(
                     'Create course param type error, crs={}'.format(crs))
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
-
+            #对欲添加课程时间的格式进行检查
             if not isinstance(times, list):
                 logging.error('Course time format err, times={}'.format(times))
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
@@ -136,7 +136,7 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
                 logging.error('Course time format err, times={}'.format(times))
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
 
-            # course already exists
+            # 如果当前想要添加的课程id已经在列表中存在（实际上也就是不支持课号一样的课程，与北大选课网有所区别）
             if Course.objects.filter(course_id=courseId).exists():
                 logging.error(
                     'Cannot add for course already exist, crsId={}'.format(courseId))
@@ -178,9 +178,9 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
                 return JsonResponse({'success': False, 'msg': ERR_TYPE.UNKNOWN})
 
         return JsonResponse({'success': True})
-
+    #通过GET请求来获取满足查询条件的课程列表
     elif request.method == 'GET':
-        # For queries of args not carried in URL, empty string will be returned
+        # 这里如果在request结构体中没有填写课程的某些属性作为查询条件，则返回空字符串
         crsId = request.GET.get('id')
         dept = request.GET.get('dept')
         period = request.GET.get('period')
@@ -191,7 +191,7 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
 
         if crsIdInURL != '':
             crsId = crsIdInURL
-
+        #依照搜寻条件依次进行层次查询
         course_list = Course.objects.all()
         if crsId:
             course_list = course_list.filter(course_id=crsId)
@@ -237,7 +237,7 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
             course_json_list.append(course_json)
         return JsonResponse({'success': True, 'course_list': course_json_list})
 
-    # Edit course info
+    # 编辑课程的相关信息，采用PUT的请求方式
     elif request.method == 'PUT':
         if not request.user.is_superuser:
             logging.error('user edit course without privilege')
@@ -256,13 +256,13 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
             logging.error('courses param err, req={}'.format(reqData))
             return JsonResponse({'success': False, 'msg': ERR_TYPE.PARAM_ERR})
 
-        # NOTE: only support edit one course per request,
-        #       warn on multiple additions
+        # NOTE: 只支持一次修改一个课程的相关信息
+        #       同时进行多个课程的修改会报错
         if len(crss) > 1:
             logging.error(ERR_TYPE.GT_ONE)
             return JsonResponse({'success': False, 'msg': ERR_TYPE.GT_ONE})
 
-        # Only on element in list. Not a real loop
+        # 此处并不是一个真正的循环，实际上在crss的list中只有一个crs元素
         for crs in crss:
             courseId = crs.get('course_id')
             name = crs.get('name')
@@ -299,7 +299,7 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
 
             crsSet = Course.objects.filter(course_id=courseId)
 
-            # course not exist
+            # 想要修改的课程如果不存在，则进行一个报错
             if not crsSet.exists():
                 logging.error(
                     'Cannot edit unexist course, crsId={}'.format(courseId))
@@ -325,7 +325,7 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
             c.save()
         return JsonResponse({'success': True})
 
-    # Delete a course
+    # 用DELETE类型的请求来删除一个课程
     elif request.method == 'DELETE':
         if not request.user.is_superuser:
             logging.error('user delete course without privilege')
@@ -346,7 +346,7 @@ def course(request: HttpRequest, crsIdInURL: str = ''):
         logging.error('invalid method: {}'.format(request.method))
         return JsonResponse({'success': False, 'msg': ERR_TYPE.INVALID_METHOD})
 
-
+#查看课程详细信息的函数（主要用于前端交互功能：点击选课列表中已选课程来查看该课程的详细信息）
 @csrf_exempt
 def courseDetail(request: HttpRequest, course_id: str = ''):
     if request.method == 'GET':
