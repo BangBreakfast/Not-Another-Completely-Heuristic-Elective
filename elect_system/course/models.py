@@ -7,15 +7,20 @@ sys.path.append("..")
 Course 类
 
 属性:
-    course_id: 主键
+    course_id: 课程编号
     name: 课程名称
-    time: 上课时间
-    info: 课程信息
-
-外键:
-
+    times: 上课时间(key1：day key2：period)
+    credit: 课程学分
+    main_class：课程所属大类（包括必修课、限选课、任选课、政治课、英语课、体育课、通选课）
+    sub_class：次要类别（例如英语课的ABCC+，通选课的ABCDEF）
+    lecture：课程教师
+    pos：课程的上课地点
+    dept：开课院系
+    detail：课程详情
+    capacity：课程最大选课人数
+    electnum：课程当前选课人数
 '''
-# TODO: complete the dict
+# 院系列表详细信息
 DEPT = [
     {"id":1,"name":"数学科学学院"}, 
     {"id":4,"name":"物理学院"}, 
@@ -148,9 +153,9 @@ class Course(models.Model):
 
     capacity = models.IntegerField(default=50)
     elect_num = models.IntegerField(default=0)
-    elect_newround_num = models.IntegerField(default=0) # Not used
+    elect_newround_num = models.IntegerField(default=0) # 该属性没有被使用到
     times = models.ManyToManyField(Time)
-
+    #检查课程id是否重复
     def getCourseObj(crsId: str):
         crsSet = Course.objects.filter(course_id=crsId)
         if crsSet.count() != 1:
@@ -158,55 +163,7 @@ class Course(models.Model):
                 crsId, crsSet.count()))
             return None
         return crsSet.get()
-
+    #检查课程id是否合法
     def isLegal(crsId: str) -> bool:
         return Course.objects.filter(course_id=crsId).exists()
 
-
-# '''
-# Elect 类
-
-# 属性:
-#     course: 所属于的课程
-#     capacity: 课程容量
-#     elect_num: 已经选上课的人数
-#     elect_newround_num: 下一轮选课的人数
-
-
-# 外键:
-
-# '''
-
-
-# class Elect(models.Model):
-#     course = models.ForeignKey(Course, on_delete=models.CASCADE)
-#     capacity = models.IntegerField(default=50)
-#     elect_num = models.IntegerField(default=0)
-#     elect_newround_num = models.IntegerField(default=0)
-
-
-# '''
-# Elected_stu 类
-
-# 属性:
-#     stu: 选课人
-#     elect: 选课类
-#     willpoint: 选课人投的意愿点数
-#     elect_status: 选课状态 (等待抽签/选上了)
-
-# '''
-
-
-# class Elected_stu(models.Model):
-#     stu = models.ForeignKey(User, on_delete=models.CASCADE)
-#     elect = models.ForeignKey(Elect, on_delete=models.CASCADE)
-#     willpoint = models.IntegerField()
-#     status = [
-#         ('1', 'Elect success!'),
-#         ('2', 'Waiting ballot...'),
-#     ]
-#     elect_status = models.CharField(
-#         max_length=2,
-#         choices=status,
-#         default='2',
-#     )

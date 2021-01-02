@@ -4,21 +4,21 @@ from user.models import User
 import json
 from elect_system.settings import ERR_TYPE
 from .views import check_time_format
-
+#用于course类的测试类
 class CourseTests(TestCase):
     def test_courses(self):
-        # Create dean
+        # 首先创建一个用于添加、修改课程的教务账户
         u = User.objects.create_user('jyeecs', password='123456')
         u.is_superuser = True
         u.save()
 
-        # Dean login
+        # 教务完成登陆操作
         respData = self.client.post(
             '/user/login', json.dumps({'uid': 'jyeecs', 'password': '123456'}), content_type="application/json")
         resp = respData.json()
         self.assertEqual(resp.get('success'), True)
 
-        # Dean add 5 courses
+        # 教务添加五个测试用的课程
         crs0 = {
             "course_id": 1233346,
             "name": "软件工程",
@@ -113,7 +113,7 @@ class CourseTests(TestCase):
             "capacity": 120,
         }
 
-        # All error time format
+        # 这里展示一些错误的时间段参数，分别代表“缺少日期”、“上课时间段格式错误”，“上课时间段数值越界”，“日期错误”
         testTimes0 = [
             {"period": [3,4]},
         ]
@@ -132,13 +132,13 @@ class CourseTests(TestCase):
         self.assertEqual(check_time_format(testTimes3), False)
         self.assertEqual(check_time_format(crs0['times']), True)
 
-        # param error
+        # 请求格式错误，正确格式应当为{course：[course1,course2......]}
         respData = self.client.post(
             '/course/courses', json.dumps(crs0), content_type="application/json")
         resp = respData.json()
         self.assertEqual(resp.get('msg'), ERR_TYPE.PARAM_ERR)
 
-        # OK
+        # 请求格式正确
         respData = self.client.post(
             '/course/courses', json.dumps({'courses': [crs0, crs1, crs2, crs3, crs4]}), content_type="application/json")
         resp = respData.json()
@@ -146,13 +146,13 @@ class CourseTests(TestCase):
             print("Error msg: " + str(resp.get('msg')))
         self.assertEqual(resp.get('success'), True)
 
-        # Dup add
+        # 课程重复添加
         respData = self.client.post(
             '/course/courses', json.dumps({'courses': [crs0, ]}), content_type="application/json")
         resp = respData.json()
         self.assertEqual(resp.get('msg'), ERR_TYPE.COURSE_DUP)
 
-        # Dean search (with conb conditions)
+        # 对课程进行搜索（采用复合的搜索查询条件）
         respData = self.client.get('/course/courses')
         resp = respData.json()
         self.assertEqual(resp.get('success'), True)
@@ -164,35 +164,35 @@ class CourseTests(TestCase):
         # edit nonexist
         # OK
 
-        # Dean search
+        # 教务依照课程的id来进行课程的搜寻
         respData = self.client.get('/course/courses?id=4830550')
         resp = respData.json()
         self.assertEqual(resp.get('success'), True)
         self.assertEqual(len(resp.get('course_list')), 1)
         self.assertEqual(resp.get('course_list')[0].get('name'), '存储技术基础')
-
+        #教务依照课程的开课院系来进行课程的搜寻
         respData = self.client.get('/course/courses?dept=4')
         resp = respData.json()
         self.assertEqual(resp.get('success'), True)
         self.assertEqual(len(resp.get('course_list')), 2)
-
+        #教务依照课程的课程类别来进行课程的搜寻
         respData = self.client.get('/course/courses?main_class=5')
         resp = respData.json()
         self.assertEqual(resp.get('success'), True)
         self.assertEqual(len(resp.get('course_list')), 1)
 
-        # Dean delete course
+        # 教务删除课程
         respData = self.client.delete('/course/courses/1233346')
         resp = respData.json()
         self.assertEqual(resp.get('success'), True)
 
-        # Dean search
+        # 教务搜索课程
         respData = self.client.get('/course/courses?dept=48')
         resp = respData.json()
         self.assertEqual(resp.get('success'), True)
         self.assertEqual(len(resp.get('course_list')), 2)
 
-        # Dean add stu
+        # 教务添加一个学生用户用于测试
         jyInfo = {
             'uid': '1600013239',
             'name': "蒋衍",
@@ -208,27 +208,27 @@ class CourseTests(TestCase):
             print("Error msg: " + str(resp.get('msg')))
         self.assertEqual(resp.get('success'), True)
 
-        # Dean logout
+        # 教务logout登出
         respData = self.client.post('/user/logout')
         resp = respData.json()
         if resp.get('msg') is not None:
             print("Error msg: " + str(resp.get('msg')))
         self.assertEqual(resp.get('success'), True)
 
-        # Stu login
+        # 学生登入系统进行测试
         respData = self.client.post(
             '/user/login', json.dumps({'uid': '1600013239', 'password': '123456'}), content_type="application/json")
         resp = respData.json()
         self.assertEqual(resp.get('success'), True)
 
-        # Stu search
+        # 学生按照课程开课院系进行查询
         respData = self.client.get('/course/courses?dept=4')
         resp = respData.json()
         if resp.get('msg') is not None:
             print("Error msg: " + str(resp.get('msg')))
         self.assertEqual(resp.get('success'), True)
         self.assertEqual(len(resp.get('course_list')), 2)
-
+        #设置多个查询条件进行课程查询
         respData = self.client.get('/course/courses?dept=4&main_class=0')
         resp = respData.json()
         if resp.get('msg') is not None:
@@ -237,7 +237,7 @@ class CourseTests(TestCase):
         self.assertEqual(len(resp.get('course_list')), 1)
         self.assertEqual(resp.get('course_list')[0].get('name'), '天体物理专题')
 
-        # Stu delete / create - FAIL
+        # 学生没有删除/修改课程的权限
         respData = self.client.post(
             '/course/courses', json.dumps({'courses': [crs0, ]}), content_type="application/json")
         resp = respData.json()

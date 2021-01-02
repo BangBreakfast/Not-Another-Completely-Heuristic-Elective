@@ -2,7 +2,7 @@ from django.urls import path
 from django.urls import re_path
 
 from . import views
-
+#url路径的设置
 urlpatterns = [
     # path('register', views.register),	# Do not use this method in production environment
     path('login', views.login),
