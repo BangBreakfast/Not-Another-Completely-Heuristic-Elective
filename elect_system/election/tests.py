@@ -4,21 +4,21 @@ from user.models import User
 import json
 from elect_system.settings import ERR_TYPE, ELE_TYPE
 
-
+#election类的测试类
 class ElectionTests(TestCase):
     def test_elect(self):
-        # Create dean
+        # 创建一个教务用户用于测试
         u = User.objects.create_user('jyeecs', password='123456')
         u.is_superuser = True
         u.save()
 
-        # Dean login
+        # 教务login登录
         respData = self.client.post(
             '/user/login', json.dumps({'uid': 'jyeecs', 'password': '123456'}), content_type="application/json")
         resp = respData.json()
         self.assertEqual(resp.get('success'), True)
 
-        # Dean add 3 courses
+        # 教务添加三门课程
         crs0 = {
             "course_id": 1233346,
             "name": "软件工程",
@@ -85,7 +85,7 @@ class ElectionTests(TestCase):
             print("Error msg: " + str(resp.get('msg')))
         self.assertEqual(resp.get('success'), True)
 
-        # Dean add 2 stu
+        # 教务添加两个学生用户
         jyInfo = {
             'uid': '1600013239',
             'name': "蒋衍",
@@ -109,20 +109,20 @@ class ElectionTests(TestCase):
             print("Error msg: " + str(resp.get('msg')))
         self.assertEqual(resp.get('success'), True)
 
-        # Dean logout
+        # 教务logout登出
         respData = self.client.post('/user/logout')
         resp = respData.json()
         if resp.get('msg') is not None:
             print("Error msg: " + str(resp.get('msg')))
         self.assertEqual(resp.get('success'), True)
 
-        # JY login
+        # JY login登入
         respData = self.client.post(
             '/user/login', json.dumps({'uid': '1600013239', 'password': '123456'}), content_type="application/json")
         resp = respData.json()
         self.assertEqual(resp.get('success'), True)
 
-        # JY search
+        # JY 进行课程查询
         respData = self.client.get('/course/courses?dept=4')
         resp = respData.json()
         if resp.get('msg') is not None:
@@ -138,8 +138,8 @@ class ElectionTests(TestCase):
         self.assertEqual(resp.get('course_list')[0].get(
             'election').get('pending_num'), 0)
 
-        # Stu get personal schedule
-        # Not allowed
+        # JY获取他人的选课列表
+        # 由于权限限制，不允许进行访问
         respData = self.client.get('/election/schedule/1700012855')
         resp = respData.json()
         self.assertEqual(resp.get('msg'), ERR_TYPE.NOT_ALLOWED)
@@ -152,13 +152,13 @@ class ElectionTests(TestCase):
         self.assertEqual(type(resp.get('data')), list)
         self.assertEqual(len(resp.get('data')), 0)
 
-        # Stu elect one course
-        # Method error
+        # Stu 选修一门课程
+        # 请求方式GET错误
         respData = self.client.get('/election/elect')
         resp = respData.json()
         self.assertEqual(resp.get('msg'), ERR_TYPE.INVALID_METHOD)
 
-        # param error
+        # 请求方式POST正确，但json格式不正确
         respData = self.client.post(
             '/election/elect', json.dumps({
                 'course_id': '1233346',
@@ -167,7 +167,7 @@ class ElectionTests(TestCase):
         resp = respData.json()
         self.assertEqual(resp.get('msg'), ERR_TYPE.PARAM_ERR)
 
-        # Wp error
+        # 意愿点错误
         respData = self.client.post(
             '/election/elect', json.dumps({
                 'type': 0,
@@ -177,7 +177,7 @@ class ElectionTests(TestCase):
         resp = respData.json()
         self.assertEqual(resp.get('msg'), ERR_TYPE.WP_ERR)
 
-        # OK
+        # 正确的请求
         respData = self.client.post(
             '/election/elect', json.dumps({
                 'type': 0,
@@ -189,7 +189,7 @@ class ElectionTests(TestCase):
             print("Error msg: " + str(resp.get('msg')))
         self.assertEqual(resp.get('success'), True)
 
-        # Time conflict
+        # 时间冲突选课
         respData = self.client.post(
             '/election/elect', json.dumps({
                 'type': 0,
@@ -199,7 +199,7 @@ class ElectionTests(TestCase):
         resp = respData.json()
         self.assertEqual(resp.get('msg'), ERR_TYPE.TIME_CONF)
 
-        # Wp error
+        # 意愿点溢出选课
         respData = self.client.post(
             '/election/elect', json.dumps({
                 'type': 0,
@@ -209,7 +209,7 @@ class ElectionTests(TestCase):
         resp = respData.json()
         self.assertEqual(resp.get('msg'), ERR_TYPE.WP_ERR)
 
-        # OK
+        # 正确选课操作
         respData = self.client.post(
             '/election/elect', json.dumps({
                 'type': 0,
@@ -222,7 +222,7 @@ class ElectionTests(TestCase):
         self.assertEqual(resp.get('success'), True)
         self.assertEqual(Election.getWpCnt('1600013239'), 99)
 
-        # Dup election
+        # 取消选课操作
         respData = self.client.post(
             '/election/elect', json.dumps({
                 'type': 0,
@@ -232,7 +232,7 @@ class ElectionTests(TestCase):
         resp = respData.json()
         self.assertEqual(resp.get('msg'), ERR_TYPE.ELE_DUP)
 
-        # Stu get personal schedule
+        # Stu获取个人的选课计划
         respData = self.client.get('/election/schedule')
         resp = respData.json()
         if resp.get('msg') is not None:
@@ -240,7 +240,7 @@ class ElectionTests(TestCase):
         self.assertEqual(type(resp.get('data')), list)
         self.assertEqual(len(resp.get('data')), 2)
 
-        # Stu edit wp
+        # Stu修改选课的意愿点
         respData = self.client.post(
             '/election/elect', json.dumps({
                 'type': 1,
@@ -252,7 +252,7 @@ class ElectionTests(TestCase):
             print("Error msg: " + str(resp.get('msg')))
         self.assertEqual(resp.get('success'), True)
 
-        # Stu wp should change
+        # Stu 意愿点应当得到修改
         self.assertEqual(Election.getWpCnt('1600013239'), 1)
         self.assertEqual(Election.getCourseElecionNum('1233346')[1], 1)
         crss = Election.getCourseOfStudent('1600013239')
